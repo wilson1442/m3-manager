@@ -291,23 +291,17 @@ export default function Channels({ user, onLogout }) {
               </DialogDescription>
             </DialogHeader>
             <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              {currentStream && (
-                <video
-                  key={currentStream.url}
-                  controls
-                  autoPlay
-                  className="w-full h-full"
-                  data-testid="video-player"
-                >
-                  <source src={currentStream.url} type="application/x-mpegURL" />
-                  <source src={currentStream.url} type="video/mp4" />
-                  Your browser does not support the video tag.
-                </video>
-              )}
+              <video
+                ref={videoRef}
+                controls
+                className="w-full h-full"
+                data-testid="video-player"
+              />
             </div>
-            <div className="text-sm text-muted-foreground">
-              <p>Stream URL: {currentStream?.url}</p>
-              <p className="mt-1">If the stream doesn't play, it may require a specialized player or the stream may be offline.</p>
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p><strong>Stream URL:</strong> {currentStream?.url}</p>
+              <p><strong>Playlist:</strong> {currentStream?.playlist_name}</p>
+              <p className="text-xs">Note: If the stream doesn't play, it may be offline or require authentication.</p>
             </div>
           </DialogContent>
         </Dialog>
