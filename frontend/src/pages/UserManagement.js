@@ -53,7 +53,7 @@ export default function UserManagement({ user, onLogout }) {
 
   const fetchUsers = async () => {
     try {
-      const url = selectedTenantFilter 
+      const url = selectedTenantFilter && selectedTenantFilter !== "all"
         ? `${API}/users?tenant_id=${selectedTenantFilter}`
         : `${API}/users`;
       
