@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, UserCircle } from "lucide-react";
+import { Plus, Trash2, UserCircle, Filter } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -17,21 +17,47 @@ const API = `${BACKEND_URL}/api`;
 
 export default function UserManagement({ user, onLogout }) {
   const [users, setUsers] = useState([]);
+  const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
-  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [selectedTenantFilter, setSelectedTenantFilter] = useState("");
+  const [formData, setFormData] = useState({ 
+    username: "", 
+    password: "", 
+    tenant_id: "",
+    role: "user"
+  });
 
   const token = localStorage.getItem("token");
+  const isSuperAdmin = user.role === "super_admin";
 
   useEffect(() => {
+    if (isSuperAdmin) {
+      fetchTenants();
+    }
     fetchUsers();
-  }, []);
+  }, [selectedTenantFilter]);
+
+  const fetchTenants = async () => {
+    try {
+      const response = await axios.get(`${API}/tenants`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setTenants(response.data);
+    } catch (error) {
+      toast.error("Failed to fetch tenants");
+    }
+  };
 
   const fetchUsers = async () => {
     try {
-      const response = await axios.get(`${API}/users`, {
+      const url = selectedTenantFilter 
+        ? `${API}/users?tenant_id=${selectedTenantFilter}`
+        : `${API}/users`;
+      
+      const response = await axios.get(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(response.data);
@@ -44,13 +70,19 @@ export default function UserManagement({ user, onLogout }) {
 
   const handleAdd = async (e) => {
     e.preventDefault();
+    
+    if (isSuperAdmin && !formData.tenant_id) {
+      toast.error("Please select a tenant");
+      return;
+    }
+
     try {
       await axios.post(`${API}/users`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("User created successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ username: "", password: "" });
+      setFormData({ username: "", password: "", tenant_id: "", role: "user" });
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to create user");
@@ -76,13 +108,20 @@ export default function UserManagement({ user, onLogout }) {
     setDeleteDialogOpen(true);
   };
 
+  const getTenantName = (tenantId) => {
+    const tenant = tenants.find(t => t.id === tenantId);
+    return tenant ? tenant.name : tenantId;
+  };
+
   return (
     <Layout user={user} onLogout={onLogout} currentPage="users">
       <div className="space-y-6" data-testid="user-management-page">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">User Management</h1>
-            <p className="text-base text-muted-foreground">Manage users in your tenant</p>
+            <p className="text-base text-muted-foreground">
+              {isSuperAdmin ? "Manage users across all tenants" : "Manage users in your tenant"}
+            </p>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -93,7 +132,9 @@ export default function UserManagement({ user, onLogout }) {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New User</DialogTitle>
-                <DialogDescription>Create a new user in your tenant</DialogDescription>
+                <DialogDescription>
+                  {isSuperAdmin ? "Create a new user and assign to a tenant" : "Create a new user in your tenant"}
+                </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAdd} className="space-y-4">
                 <div className="space-y-2">
@@ -117,6 +158,44 @@ export default function UserManagement({ user, onLogout }) {
                     required
                   />
                 </div>
+                {isSuperAdmin && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="tenant">Tenant</Label>
+                      <Select
+                        value={formData.tenant_id}
+                        onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
+                        required
+                      >
+                        <SelectTrigger id="tenant" data-testid="user-tenant-select">
+                          <SelectValue placeholder="Select a tenant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tenants.map((tenant) => (
+                            <SelectItem key={tenant.id} value={tenant.id}>
+                              {tenant.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="role">Role</Label>
+                      <Select
+                        value={formData.role}
+                        onValueChange={(value) => setFormData({ ...formData, role: value })}
+                      >
+                        <SelectTrigger id="role" data-testid="user-role-select">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="tenant_owner">Tenant Owner</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
                 <Button type="submit" data-testid="submit-add-user-btn" className="w-full">
                   Create User
                 </Button>
@@ -124,6 +203,33 @@ export default function UserManagement({ user, onLogout }) {
             </DialogContent>
           </Dialog>
         </div>
+
+        {isSuperAdmin && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <Filter className="h-5 w-5 text-muted-foreground" />
+                <Label htmlFor="tenant-filter" className="whitespace-nowrap">Filter by Tenant:</Label>
+                <Select
+                  value={selectedTenantFilter}
+                  onValueChange={(value) => setSelectedTenantFilter(value)}
+                >
+                  <SelectTrigger id="tenant-filter" data-testid="tenant-filter-select" className="max-w-xs">
+                    <SelectValue placeholder="All tenants" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All tenants</SelectItem>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {loading ? (
           <div className="text-center py-12">Loading users...</div>
@@ -145,6 +251,7 @@ export default function UserManagement({ user, onLogout }) {
                   <TableRow>
                     <TableHead>Username</TableHead>
                     <TableHead>Role</TableHead>
+                    {isSuperAdmin && <TableHead>Tenant</TableHead>}
                     <TableHead>Created At</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
@@ -158,6 +265,11 @@ export default function UserManagement({ user, onLogout }) {
                           {u.role.replace("_", " ").toUpperCase()}
                         </span>
                       </TableCell>
+                      {isSuperAdmin && (
+                        <TableCell className="text-sm text-muted-foreground">
+                          {u.tenant_id ? getTenantName(u.tenant_id) : "No tenant"}
+                        </TableCell>
+                      )}
                       <TableCell>{new Date(u.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
                         <Button
