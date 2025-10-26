@@ -318,6 +318,7 @@ async def create_user(user_data: UserCreate, current_user: User = Depends(get_cu
     hashed_password = get_password_hash(user_data.password)
     user = User(
         username=user_data.username,
+        name=user_data.name,
         role=user_data.role if current_user.role == "super_admin" else "user",
         tenant_id=user_data.tenant_id
     )
