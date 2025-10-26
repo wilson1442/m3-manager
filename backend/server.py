@@ -258,10 +258,18 @@ async def create_user(user_data: UserCreate, current_user: User = Depends(get_cu
         user_data.tenant_id = current_user.tenant_id
         user_data.role = "user"  # Tenant owners can only create regular users
     
+    # Super admins can create users for any tenant
+    if current_user.role == "super_admin":
+        # Validate tenant_id if provided
+        if user_data.tenant_id:
+            tenant = await db.tenants.find_one({"id": user_data.tenant_id})
+            if not tenant:
+                raise HTTPException(status_code=404, detail="Tenant not found")
+    
     hashed_password = get_password_hash(user_data.password)
     user = User(
         username=user_data.username,
-        role=user_data.role,
+        role=user_data.role if current_user.role == "super_admin" else "user",
         tenant_id=user_data.tenant_id
     )
     
@@ -274,13 +282,16 @@ async def create_user(user_data: UserCreate, current_user: User = Depends(get_cu
     return user
 
 @api_router.get("/users", response_model=List[User])
-async def get_users(current_user: User = Depends(get_current_user)):
+async def get_users(current_user: User = Depends(get_current_user), tenant_id: Optional[str] = None):
     if current_user.role == "user":
         raise HTTPException(status_code=403, detail="Access denied")
     
     query = {}
     if current_user.role == "tenant_owner":
         query = {"tenant_id": current_user.tenant_id}
+    elif current_user.role == "super_admin" and tenant_id:
+        # Allow filtering by tenant_id for super admins
+        query = {"tenant_id": tenant_id}
     
     users = await db.users.find(query, {"_id": 0, "password": 0}).to_list(1000)
     
