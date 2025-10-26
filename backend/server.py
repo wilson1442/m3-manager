@@ -425,6 +425,8 @@ async def update_m3u(playlist_id: str, playlist_data: M3UPlaylistUpdate, current
         updated_doc['created_at'] = datetime.fromisoformat(updated_doc['created_at'])
     if isinstance(updated_doc['updated_at'], str):
         updated_doc['updated_at'] = datetime.fromisoformat(updated_doc['updated_at'])
+    if updated_doc.get('last_refresh') and isinstance(updated_doc['last_refresh'], str):
+        updated_doc['last_refresh'] = datetime.fromisoformat(updated_doc['last_refresh'])
     
     return M3UPlaylist(**updated_doc)
 
