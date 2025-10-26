@@ -131,6 +131,12 @@ export default function UserManagement({ user, onLogout }) {
     setDeleteDialogOpen(true);
   };
 
+  const openEditDialog = (user) => {
+    setSelectedUser(user);
+    setEditFormData({ name: user.name || "", password: "" });
+    setIsEditDialogOpen(true);
+  };
+
   const getTenantName = (tenantId) => {
     const tenant = tenants.find(t => t.id === tenantId);
     return tenant ? tenant.name : tenantId;
