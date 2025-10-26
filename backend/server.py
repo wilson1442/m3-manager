@@ -89,8 +89,13 @@ class User(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
+    name: Optional[str] = None
     role: Optional[str] = "user"
     tenant_id: Optional[str] = None
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    password: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
