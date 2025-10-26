@@ -136,6 +136,20 @@ class M3UPlaylistUpdate(BaseModel):
     url: Optional[str] = None
     content: Optional[str] = None
 
+class Channel(BaseModel):
+    name: str
+    url: str
+    group: Optional[str] = None
+    logo: Optional[str] = None
+    playlist_name: str
+    playlist_id: str
+
+class StreamProbeResult(BaseModel):
+    url: str
+    online: bool
+    response_time: Optional[float] = None
+    error: Optional[str] = None
+
 class ThemeUpdate(BaseModel):
     theme: str
 
