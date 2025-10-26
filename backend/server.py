@@ -467,6 +467,24 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@app.on_event("startup")
+async def startup_event():
+    """Start the scheduler when the app starts"""
+    # Schedule the refresh job to run every hour
+    scheduler.add_job(
+        refresh_m3u_playlists,
+        'interval',
+        hours=1,
+        id='refresh_m3u_playlists',
+        replace_existing=True
+    )
+    scheduler.start()
+    logger.info("M3U refresh scheduler started - running every hour")
+    
+    # Run once on startup
+    asyncio.create_task(refresh_m3u_playlists())
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
+    scheduler.shutdown()
     client.close()
