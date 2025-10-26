@@ -18,13 +18,22 @@ export default function Layout({ user, onLogout, children, currentPage }) {
   ];
 
   if (user.role === "super_admin") {
-    menuItems.push({
-      name: "Tenants",
-      icon: Building2,
-      path: "/tenants",
-      key: "tenants",
-      roles: ["super_admin"],
-    });
+    menuItems.push(
+      {
+        name: "Tenants",
+        icon: Building2,
+        path: "/tenants",
+        key: "tenants",
+        roles: ["super_admin"],
+      },
+      {
+        name: "Users",
+        icon: Users,
+        path: "/users",
+        key: "users",
+        roles: ["super_admin"],
+      }
+    );
   }
 
   if (user.role === "tenant_owner") {
