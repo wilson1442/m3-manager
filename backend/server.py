@@ -80,6 +80,7 @@ class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     username: str
+    name: Optional[str] = None  # Display name
     role: str  # super_admin, tenant_owner, user
     tenant_id: Optional[str] = None
     theme: str = "light"  # light or dark
