@@ -88,10 +88,27 @@ export default function UserManagement({ user, onLogout }) {
       });
       toast.success("User created successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ username: "", password: "", tenant_id: "", role: "user" });
+      setFormData({ username: "", password: "", name: "", tenant_id: "", role: "user" });
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to create user");
+    }
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    
+    try {
+      await axios.put(`${API}/users/${selectedUser.id}`, editFormData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("User updated successfully!");
+      setIsEditDialogOpen(false);
+      setSelectedUser(null);
+      setEditFormData({ name: "", password: "" });
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update user");
     }
   };
 
