@@ -245,6 +245,12 @@ export default function M3UManagement({ user, onLogout }) {
                     {playlist.name}
                   </CardTitle>
                   <CardDescription className="break-all">{playlist.url}</CardDescription>
+                  {playlist.last_refresh && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1 mt-2">
+                      <Clock className="h-3 w-3" />
+                      Last refreshed: {formatRefreshTime(playlist.last_refresh)}
+                    </p>
+                  )}
                 </CardHeader>
                 <CardContent>
                   {playlist.content && (
