@@ -210,14 +210,14 @@ export default function UserManagement({ user, onLogout }) {
                 <Filter className="h-5 w-5 text-muted-foreground" />
                 <Label htmlFor="tenant-filter" className="whitespace-nowrap">Filter by Tenant:</Label>
                 <Select
-                  value={selectedTenantFilter}
-                  onValueChange={(value) => setSelectedTenantFilter(value)}
+                  value={selectedTenantFilter || undefined}
+                  onValueChange={(value) => setSelectedTenantFilter(value || "")}
                 >
                   <SelectTrigger id="tenant-filter" data-testid="tenant-filter-select" className="max-w-xs">
                     <SelectValue placeholder="All tenants" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All tenants</SelectItem>
+                    <SelectItem value="all">All tenants</SelectItem>
                     {tenants.map((tenant) => (
                       <SelectItem key={tenant.id} value={tenant.id}>
                         {tenant.name}
