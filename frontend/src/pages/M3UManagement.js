@@ -351,7 +351,6 @@ export default function M3UManagement({ user, onLogout }) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
     </Layout>
   );
 }
