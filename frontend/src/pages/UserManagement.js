@@ -177,6 +177,16 @@ export default function UserManagement({ user, onLogout }) {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="name">Name (Optional)</Label>
+                  <Input
+                    id="name"
+                    data-testid="user-name-input"
+                    placeholder="Display name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
