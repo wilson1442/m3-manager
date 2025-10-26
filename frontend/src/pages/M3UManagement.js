@@ -220,7 +220,8 @@ export default function M3UManagement({ user, onLogout }) {
                 </form>
               </DialogContent>
             </Dialog>
-          )}
+            </>
+            )}
         </div>
 
         {loading ? (
