@@ -445,6 +445,26 @@ async def delete_m3u(playlist_id: str, current_user: User = Depends(get_current_
     await db.m3u_playlists.delete_one({"id": playlist_id})
     return {"message": "Playlist deleted successfully"}
 
+@api_router.post("/m3u/refresh")
+async def trigger_refresh(current_user: User = Depends(get_current_user)):
+    """Manually trigger M3U playlist refresh"""
+    if current_user.role not in ["super_admin", "tenant_owner"]:
+        raise HTTPException(status_code=403, detail="Only admins and tenant owners can refresh playlists")
+    
+    asyncio.create_task(refresh_m3u_playlists())
+    return {"message": "Playlist refresh triggered"}
+
+@api_router.get("/m3u/refresh/status")
+async def get_refresh_status(current_user: User = Depends(get_current_user)):
+    """Get the status of the refresh job"""
+    job = scheduler.get_job('refresh_m3u_playlists')
+    if job:
+        return {
+            "next_run": job.next_run_time.isoformat() if job.next_run_time else None,
+            "interval": "1 hour"
+        }
+    return {"message": "Refresh job not scheduled"}
+
 # Profile routes
 @api_router.put("/profile/theme")
 async def update_theme(theme_data: ThemeUpdate, current_user: User = Depends(get_current_user)):
