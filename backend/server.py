@@ -580,6 +580,42 @@ async def get_refresh_status(current_user: User = Depends(get_current_user)):
         }
     return {"message": "Refresh job not scheduled"}
 
+@api_router.get("/channels/search", response_model=List[Channel])
+async def search_channels(q: str, current_user: User = Depends(get_current_user)):
+    """Search for channels across all playlists in user's tenant"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    # Get all playlists for the tenant
+    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    
+    all_channels = []
+    search_query = q.lower()
+    
+    for playlist in playlists:
+        if playlist.get('content'):
+            channels = parse_m3u_content(playlist['content'])
+            
+            # Filter channels by search query
+            for channel in channels:
+                if search_query in channel.get('name', '').lower():
+                    all_channels.append(Channel(
+                        name=channel.get('name', 'Unknown'),
+                        url=channel.get('url', ''),
+                        group=channel.get('group'),
+                        logo=channel.get('logo'),
+                        playlist_name=playlist['name'],
+                        playlist_id=playlist['id']
+                    ))
+    
+    return all_channels[:100]  # Limit to 100 results
+
+@api_router.post("/channels/probe", response_model=StreamProbeResult)
+async def probe_channel(url: str, current_user: User = Depends(get_current_user)):
+    """Probe a stream URL to check if it's online"""
+    result = await probe_stream(url)
+    return StreamProbeResult(**result)
+
 # Profile routes
 @api_router.put("/profile/theme")
 async def update_theme(theme_data: ThemeUpdate, current_user: User = Depends(get_current_user)):
