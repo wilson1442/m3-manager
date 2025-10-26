@@ -120,6 +120,16 @@ function App() {
             }
           />
           <Route
+            path="/channels"
+            element={
+              isAuthenticated ? (
+                <Channels user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
             path="/"
             element={
               isAuthenticated ? (
