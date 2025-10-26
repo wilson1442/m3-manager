@@ -161,11 +161,10 @@ export default function UserManagement({ user, onLogout }) {
                 {isSuperAdmin && (
                   <>
                     <div className="space-y-2">
-                      <Label htmlFor="tenant">Tenant</Label>
+                      <Label htmlFor="tenant">Tenant *</Label>
                       <Select
-                        value={formData.tenant_id}
+                        value={formData.tenant_id || undefined}
                         onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
-                        required
                       >
                         <SelectTrigger id="tenant" data-testid="user-tenant-select">
                           <SelectValue placeholder="Select a tenant" />
