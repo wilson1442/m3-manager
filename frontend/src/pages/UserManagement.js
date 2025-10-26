@@ -288,6 +288,7 @@ export default function UserManagement({ user, onLogout }) {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Username</TableHead>
+                    <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
                     {isSuperAdmin && <TableHead>Tenant</TableHead>}
                     <TableHead>Created At</TableHead>
