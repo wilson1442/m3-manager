@@ -75,6 +75,70 @@ async def refresh_m3u_playlists():
     except Exception as e:
         logger.error(f"Error in refresh_m3u_playlists: {str(e)}")
 
+def parse_m3u_content(content: str) -> List[dict]:
+    """Parse M3U content and extract channel information"""
+    channels = []
+    if not content:
+        return channels
+    
+    lines = content.strip().split('\n')
+    current_channel = {}
+    
+    for i, line in enumerate(lines):
+        line = line.strip()
+        
+        if line.startswith('#EXTINF:'):
+            # Parse channel metadata
+            # Format: #EXTINF:-1 tvg-logo="logo.png" group-title="Sports",Channel Name
+            current_channel = {}
+            
+            # Extract logo
+            if 'tvg-logo="' in line:
+                start = line.index('tvg-logo="') + 10
+                end = line.index('"', start)
+                current_channel['logo'] = line[start:end]
+            
+            # Extract group
+            if 'group-title="' in line:
+                start = line.index('group-title="') + 13
+                end = line.index('"', start)
+                current_channel['group'] = line[start:end]
+            
+            # Extract channel name (after last comma)
+            if ',' in line:
+                current_channel['name'] = line.split(',', 1)[1].strip()
+            
+        elif line and not line.startswith('#') and current_channel:
+            # This is the stream URL
+            current_channel['url'] = line
+            channels.append(current_channel)
+            current_channel = {}
+    
+    return channels
+
+async def probe_stream(url: str) -> dict:
+    """Check if a stream is online by making a HEAD request"""
+    result = {
+        "url": url,
+        "online": False,
+        "response_time": None,
+        "error": None
+    }
+    
+    try:
+        start_time = datetime.now()
+        async with aiohttp.ClientSession() as session:
+            async with session.head(url, timeout=aiohttp.ClientTimeout(total=10), allow_redirects=True) as response:
+                end_time = datetime.now()
+                result["response_time"] = (end_time - start_time).total_seconds()
+                result["online"] = response.status in [200, 206, 302, 301]
+    except asyncio.TimeoutError:
+        result["error"] = "Timeout"
+    except Exception as e:
+        result["error"] = str(e)
+    
+    return result
+
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
