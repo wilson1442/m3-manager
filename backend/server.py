@@ -118,6 +118,7 @@ class M3UPlaylist(BaseModel):
     created_by: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_refresh: Optional[datetime] = None
 
 class M3UPlaylistCreate(BaseModel):
     name: str
