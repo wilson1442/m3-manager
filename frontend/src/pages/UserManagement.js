@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, UserCircle, Filter } from "lucide-react";
+import { Plus, Trash2, UserCircle, Filter, Pencil } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -20,14 +20,20 @@ export default function UserManagement({ user, onLogout }) {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedTenantFilter, setSelectedTenantFilter] = useState("");
   const [formData, setFormData] = useState({ 
     username: "", 
     password: "", 
+    name: "",
     tenant_id: "",
     role: "user"
+  });
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    password: ""
   });
 
   const token = localStorage.getItem("token");
