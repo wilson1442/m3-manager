@@ -51,18 +51,34 @@ export default function Layout({ user, onLogout, children, currentPage }) {
         path: "/m3u",
         key: "m3u",
         roles: ["tenant_owner"],
+      },
+      {
+        name: "Search Channels",
+        icon: Search,
+        path: "/channels",
+        key: "channels",
+        roles: ["tenant_owner"],
       }
     );
   }
 
   if (user.role === "user") {
-    menuItems.push({
-      name: "Playlists",
-      icon: ListMusic,
-      path: "/m3u",
-      key: "m3u",
-      roles: ["user"],
-    });
+    menuItems.push(
+      {
+        name: "Playlists",
+        icon: ListMusic,
+        path: "/m3u",
+        key: "m3u",
+        roles: ["user"],
+      },
+      {
+        name: "Search Channels",
+        icon: Search,
+        path: "/channels",
+        key: "channels",
+        roles: ["user"],
+      }
+    );
   }
 
   menuItems.push({
