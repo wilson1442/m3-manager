@@ -367,6 +367,36 @@ async def delete_user(user_id: str, current_user: User = Depends(get_current_use
     await db.users.delete_one({"id": user_id})
     return {"message": "User deleted successfully"}
 
+@api_router.put("/users/{user_id}", response_model=User)
+async def update_user(user_id: str, user_data: UserUpdate, current_user: User = Depends(get_current_user)):
+    if current_user.role not in ["super_admin", "tenant_owner"]:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user_doc:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Tenant owners can only update users in their tenant
+    if current_user.role == "tenant_owner" and user_doc['tenant_id'] != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Can only update users in your tenant")
+    
+    # Build update data
+    update_data = {}
+    if user_data.name is not None:
+        update_data['name'] = user_data.name
+    if user_data.password is not None:
+        update_data['password'] = get_password_hash(user_data.password)
+    
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    # Fetch updated user
+    updated_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if isinstance(updated_doc['created_at'], str):
+        updated_doc['created_at'] = datetime.fromisoformat(updated_doc['created_at'])
+    
+    return User(**updated_doc)
+
 # M3U Playlist routes
 @api_router.post("/m3u", response_model=M3UPlaylist)
 async def create_m3u(playlist_data: M3UPlaylistCreate, current_user: User = Depends(get_current_user)):
