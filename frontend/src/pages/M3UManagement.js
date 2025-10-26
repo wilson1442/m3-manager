@@ -222,6 +222,7 @@ export default function M3UManagement({ user, onLogout }) {
             </Dialog>
             </>
             )}
+          </div>
         </div>
 
         {loading ? (
