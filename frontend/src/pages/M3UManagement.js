@@ -286,9 +286,8 @@ export default function M3UManagement({ user, onLogout }) {
             ))}
           </div>
         )}
-      </div>
 
-      {/* Edit Dialog */}
+        {/* Edit Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
           <DialogContent>
             <DialogHeader>
