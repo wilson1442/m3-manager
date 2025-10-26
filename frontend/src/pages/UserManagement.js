@@ -299,6 +299,7 @@ export default function UserManagement({ user, onLogout }) {
                   {users.map((u) => (
                     <TableRow key={u.id} data-testid={`user-row-${u.id}`}>
                       <TableCell className="font-medium">{u.username}</TableCell>
+                      <TableCell>{u.name || "-"}</TableCell>
                       <TableCell>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
                           {u.role.replace("_", " ").toUpperCase()}
@@ -311,14 +312,24 @@ export default function UserManagement({ user, onLogout }) {
                       )}
                       <TableCell>{new Date(u.created_at).toLocaleDateString()}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          data-testid={`delete-user-${u.id}`}
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => openDeleteDialog(u)}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            data-testid={`edit-user-${u.id}`}
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEditDialog(u)}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            data-testid={`delete-user-${u.id}`}
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => openDeleteDialog(u)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
