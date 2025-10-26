@@ -36,6 +36,45 @@ security = HTTPBearer()
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
+# Initialize scheduler
+scheduler = AsyncIOScheduler()
+
+# Background task to refresh M3U playlists
+async def refresh_m3u_playlists():
+    """Fetch M3U content from URLs and update database"""
+    logger.info("Starting M3U playlist refresh...")
+    try:
+        playlists = await db.m3u_playlists.find({}).to_list(1000)
+        
+        async with aiohttp.ClientSession() as session:
+            for playlist in playlists:
+                try:
+                    # Fetch content from URL
+                    async with session.get(playlist['url'], timeout=aiohttp.ClientTimeout(total=30)) as response:
+                        if response.status == 200:
+                            content = await response.text()
+                            
+                            # Update playlist content and timestamp
+                            await db.m3u_playlists.update_one(
+                                {"id": playlist['id']},
+                                {
+                                    "$set": {
+                                        "content": content,
+                                        "updated_at": datetime.now(timezone.utc).isoformat(),
+                                        "last_refresh": datetime.now(timezone.utc).isoformat()
+                                    }
+                                }
+                            )
+                            logger.info(f"Refreshed playlist: {playlist['name']}")
+                        else:
+                            logger.warning(f"Failed to refresh {playlist['name']}: HTTP {response.status}")
+                except Exception as e:
+                    logger.error(f"Error refreshing playlist {playlist['name']}: {str(e)}")
+        
+        logger.info("M3U playlist refresh completed")
+    except Exception as e:
+        logger.error(f"Error in refresh_m3u_playlists: {str(e)}")
+
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
