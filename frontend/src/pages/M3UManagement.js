@@ -130,6 +130,18 @@ export default function M3UManagement({ user, onLogout }) {
     setDeleteDialogOpen(true);
   };
 
+  const formatRefreshTime = (timestamp) => {
+    if (!timestamp) return "Never";
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = Math.floor((now - date) / 1000 / 60); // minutes
+    
+    if (diff < 1) return "Just now";
+    if (diff < 60) return `${diff} min ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)} hours ago`;
+    return date.toLocaleString();
+  };
+
   const canManage = user.role === "tenant_owner" || user.role === "super_admin";
 
   return (
@@ -139,14 +151,32 @@ export default function M3UManagement({ user, onLogout }) {
           <div>
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">M3U Playlists</h1>
             <p className="text-base text-muted-foreground">{canManage ? "Manage your M3U playlists" : "View available playlists"}</p>
+            {refreshStatus?.next_run && (
+              <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                Next auto-refresh: {new Date(refreshStatus.next_run).toLocaleTimeString()}
+              </p>
+            )}
           </div>
-          {canManage && (
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button data-testid="add-playlist-btn" className="gap-2">
-                  <Plus className="h-4 w-4" /> Add Playlist
+          <div className="flex gap-2">
+            {canManage && (
+              <>
+                <Button 
+                  data-testid="refresh-playlists-btn" 
+                  variant="outline"
+                  className="gap-2"
+                  onClick={handleManualRefresh}
+                  disabled={refreshing}
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  {refreshing ? "Refreshing..." : "Refresh Now"}
                 </Button>
-              </DialogTrigger>
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button data-testid="add-playlist-btn" className="gap-2">
+                      <Plus className="h-4 w-4" /> Add Playlist
+                    </Button>
+                  </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Add New M3U Playlist</DialogTitle>
