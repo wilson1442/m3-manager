@@ -19,13 +19,22 @@ export default function Dashboard({ user, onLogout }) {
   const actions = [];
 
   if (user.role === "super_admin") {
-    actions.push({
-      title: "Manage Tenants",
-      description: "Create and manage tenant organizations",
-      icon: Building2,
-      onClick: () => navigate("/tenants"),
-      testId: "manage-tenants-btn",
-    });
+    actions.push(
+      {
+        title: "Manage Tenants",
+        description: "Create and manage tenant organizations",
+        icon: Building2,
+        onClick: () => navigate("/tenants"),
+        testId: "manage-tenants-btn",
+      },
+      {
+        title: "Manage Users",
+        description: "Create and manage users across all tenants",
+        icon: Users,
+        onClick: () => navigate("/users"),
+        testId: "manage-users-btn",
+      }
+    );
   }
 
   if (user.role === "tenant_owner") {
