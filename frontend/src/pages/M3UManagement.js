@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Link as LinkIcon } from "lucide-react";
+import { Plus, Pencil, Trash2, Link as LinkIcon, RefreshCw, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -17,16 +17,19 @@ const API = `${BACKEND_URL}/api`;
 export default function M3UManagement({ user, onLogout }) {
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
   const [formData, setFormData] = useState({ name: "", url: "", content: "" });
+  const [refreshStatus, setRefreshStatus] = useState(null);
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchPlaylists();
+    fetchRefreshStatus();
   }, []);
 
   const fetchPlaylists = async () => {
@@ -39,6 +42,35 @@ export default function M3UManagement({ user, onLogout }) {
       toast.error("Failed to fetch playlists");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRefreshStatus = async () => {
+    try {
+      const response = await axios.get(`${API}/m3u/refresh/status`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setRefreshStatus(response.data);
+    } catch (error) {
+      console.error("Failed to fetch refresh status");
+    }
+  };
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await axios.post(`${API}/m3u/refresh`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Playlist refresh triggered! Updates will appear shortly.");
+      setTimeout(() => {
+        fetchPlaylists();
+        fetchRefreshStatus();
+      }, 3000);
+    } catch (error) {
+      toast.error("Failed to trigger refresh");
+    } finally {
+      setRefreshing(false);
     }
   };
 
