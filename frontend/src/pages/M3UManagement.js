@@ -177,11 +177,11 @@ export default function M3UManagement({ user, onLogout }) {
                       <Plus className="h-4 w-4" /> Add Playlist
                     </Button>
                   </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New M3U Playlist</DialogTitle>
-                  <DialogDescription>Create a new M3U playlist for your tenant</DialogDescription>
-                </DialogHeader>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Add New M3U Playlist</DialogTitle>
+                      <DialogDescription>Create a new M3U playlist for your tenant</DialogDescription>
+                    </DialogHeader>
                 <form onSubmit={handleAdd} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Playlist Name</Label>
