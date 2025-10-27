@@ -10,7 +10,7 @@ import Profile from "@/pages/Profile";
 import Channels from "@/pages/Channels";
 import Categories from "@/pages/Categories";
 import Events from "@/pages/Events";
-import BackupRestore from "@/pages/BackupRestore";
+import Settings from "@/pages/Settings";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
