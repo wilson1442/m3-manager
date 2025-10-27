@@ -204,8 +204,9 @@ export default function Channels({ user, onLogout }) {
     setProbingChannels({ ...probingChannels, [channel.url]: true });
     
     try {
+      // Use FFmpeg probe for detailed information
       const response = await axios.post(
-        `${API}/channels/probe`,
+        `${API}/channels/probe-ffmpeg`,
         null,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -213,20 +214,40 @@ export default function Channels({ user, onLogout }) {
         }
       );
       
+      setFfmpegProbeData({
+        ...ffmpegProbeData,
+        [channel.url]: response.data,
+      });
+      
+      // Also update channel status for inline display
       setChannelStatus({
         ...channelStatus,
-        [channel.url]: response.data,
+        [channel.url]: {
+          online: response.data.online,
+          status: response.data.status,
+          error: response.data.error,
+        },
       });
       
       if (response.data.online) {
         toast.success(`${channel.name} is online!`);
       } else {
-        toast.error(`${channel.name} is offline: ${response.data.error || "No response"}`);
+        toast.error(`${channel.name} is ${response.data.status}: ${response.data.error || "No response"}`);
       }
     } catch (error) {
       toast.error("Failed to probe stream");
     } finally {
       setProbingChannels({ ...probingChannels, [channel.url]: false });
+    }
+  };
+
+  const showDetails = (channel) => {
+    const probeData = ffmpegProbeData[channel.url];
+    if (probeData) {
+      setCurrentDetails({ channel, probeData });
+      setDetailsDialogOpen(true);
+    } else {
+      toast.error("Please probe the stream first to see details");
     }
   };
 
