@@ -239,13 +239,19 @@ print_success "Frontend dependencies installed"
 
 # Update frontend .env
 print_step "Configuring frontend environment..."
+if [ "$USE_CLOUDFLARE" = "y" ]; then
+    BACKEND_URL="$CLOUDFLARE_URL"
+else
+    BACKEND_URL="http://$DOMAIN"
+fi
+
 cat > .env << EOF
-REACT_APP_BACKEND_URL=http://$DOMAIN
+REACT_APP_BACKEND_URL=$BACKEND_URL
 WDS_SOCKET_PORT=443
 REACT_APP_ENABLE_VISUAL_EDITS=false
 ENABLE_HEALTH_CHECK=false
 EOF
-print_success "Frontend environment configured"
+print_success "Frontend environment configured (Backend URL: $BACKEND_URL)"
 
 # Build frontend
 print_step "Building React application (this may take a few minutes)..."
