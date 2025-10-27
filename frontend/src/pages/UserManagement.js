@@ -255,39 +255,76 @@ export default function UserManagement({ user, onLogout }) {
                 </div>
                 {isSuperAdmin && (
                   <>
-                    <div className="space-y-2">
-                      <Label htmlFor="tenant">Tenant *</Label>
-                      <Select
-                        value={formData.tenant_id || undefined}
-                        onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
-                      >
-                        <SelectTrigger id="tenant" data-testid="user-tenant-select">
-                          <SelectValue placeholder="Select a tenant" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {tenants.map((tenant) => (
-                            <SelectItem key={tenant.id} value={tenant.id}>
-                              {tenant.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                    <div className="flex items-center space-x-2 py-2">
+                      <Checkbox
+                        id="createNewTenant"
+                        checked={formData.createNewTenant}
+                        onCheckedChange={(checked) => 
+                          setFormData({ 
+                            ...formData, 
+                            createNewTenant: checked,
+                            tenant_id: checked ? "" : formData.tenant_id
+                          })
+                        }
+                      />
+                      <Label htmlFor="createNewTenant" className="text-sm font-medium cursor-pointer">
+                        Create new tenant with this user as owner
+                      </Label>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="role">Role</Label>
-                      <Select
-                        value={formData.role}
-                        onValueChange={(value) => setFormData({ ...formData, role: value })}
-                      >
-                        <SelectTrigger id="role" data-testid="user-role-select">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="tenant_owner">Tenant Owner</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    
+                    {formData.createNewTenant ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="newTenantName">New Tenant Name *</Label>
+                        <Input
+                          id="newTenantName"
+                          data-testid="new-tenant-name-input"
+                          placeholder="Enter tenant name"
+                          value={formData.newTenantName}
+                          onChange={(e) => setFormData({ ...formData, newTenantName: e.target.value })}
+                          required={formData.createNewTenant}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          User will be created as Tenant Owner of this new tenant
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="tenant">Tenant *</Label>
+                        <Select
+                          value={formData.tenant_id || undefined}
+                          onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
+                        >
+                          <SelectTrigger id="tenant" data-testid="user-tenant-select">
+                            <SelectValue placeholder="Select a tenant" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {tenants.map((tenant) => (
+                              <SelectItem key={tenant.id} value={tenant.id}>
+                                {tenant.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                    
+                    {!formData.createNewTenant && (
+                      <div className="space-y-2">
+                        <Label htmlFor="role">Role</Label>
+                        <Select
+                          value={formData.role}
+                          onValueChange={(value) => setFormData({ ...formData, role: value })}
+                        >
+                          <SelectTrigger id="role" data-testid="user-role-select">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="tenant_owner">Tenant Owner</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                   </>
                 )}
                 <Button type="submit" data-testid="submit-add-user-btn" className="w-full">
