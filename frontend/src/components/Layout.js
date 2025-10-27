@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, ListMusic, Users, Building2, User, LogOut, Menu, X, Search } from "lucide-react";
+import { LayoutDashboard, ListMusic, Users, Building2, User, LogOut, Menu, X, Search, FolderTree, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Layout({ user, onLogout, children, currentPage }) {
