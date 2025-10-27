@@ -918,6 +918,39 @@ async def get_monitored_channels(current_user: User = Depends(get_current_user))
     
     return all_channels
 
+@api_router.post("/m3u/{playlist_id}/refresh-api")
+async def refresh_player_api(playlist_id: str, current_user: User = Depends(get_current_user)):
+    """Refresh player API data for a playlist"""
+    if current_user.role == "user":
+        raise HTTPException(status_code=403, detail="Only admins and tenant owners can refresh API data")
+    
+    playlist_doc = await db.m3u_playlists.find_one({"id": playlist_id}, {"_id": 0})
+    if not playlist_doc:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    
+    if playlist_doc['tenant_id'] != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Can only refresh playlists in your tenant")
+    
+    if not playlist_doc.get('player_api'):
+        raise HTTPException(status_code=400, detail="Playlist has no player API URL")
+    
+    # Fetch fresh data
+    api_data = await fetch_player_api_data(playlist_doc['player_api'])
+    
+    update_data = {
+        'max_connections': api_data.get('max_connections'),
+        'active_connections': api_data.get('active_connections'),
+        'expiration_date': api_data.get('expiration_date'),
+        'api_last_checked': datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.m3u_playlists.update_one({"id": playlist_id}, {"$set": update_data})
+    
+    return {
+        "message": "Player API data refreshed",
+        "data": api_data
+    }
+
 # Profile routes
 @api_router.put("/profile/theme")
 async def update_theme(theme_data: ThemeUpdate, current_user: User = Depends(get_current_user)):
