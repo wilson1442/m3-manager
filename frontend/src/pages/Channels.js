@@ -335,6 +335,8 @@ export default function Channels({ user, onLogout }) {
   const handlePlay = (channel) => {
     setCurrentStream(channel);
     setPlayerOpen(true);
+    setPlayerError(null);
+    setPlayerReady(false);
   };
 
   const handleSelectChannel = (channel) => {
