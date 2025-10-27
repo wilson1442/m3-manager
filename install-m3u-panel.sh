@@ -240,8 +240,8 @@ print_step "Creating backend systemd service..."
 cat > /etc/systemd/system/m3u-backend.service << EOF
 [Unit]
 Description=M3U Management Panel - Backend API
-After=network.target mongodb.service
-Requires=mongodb.service
+After=network.target mongod.service
+Requires=mongod.service
 
 [Service]
 Type=simple
