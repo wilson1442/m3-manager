@@ -337,6 +337,23 @@ print_success "Nginx configured and running"
 # STEP 11: START SERVICES
 # ============================================
 print_header "STEP 11: STARTING ALL SERVICES"
+
+# Verify MongoDB is running first
+print_step "Verifying MongoDB is running..."
+if systemctl is-active --quiet mongod; then
+    print_success "MongoDB is running"
+else
+    print_error "MongoDB is not running. Attempting to start..."
+    systemctl start mongod
+    sleep 3
+    if systemctl is-active --quiet mongod; then
+        print_success "MongoDB started successfully"
+    else
+        print_error "Failed to start MongoDB. Check logs: journalctl -u mongod -n 50"
+        exit 1
+    fi
+fi
+
 print_step "Starting backend service..."
 systemctl start m3u-backend
 systemctl enable m3u-backend
