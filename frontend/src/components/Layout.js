@@ -32,6 +32,13 @@ export default function Layout({ user, onLogout, children, currentPage }) {
         path: "/users",
         key: "users",
         roles: ["super_admin"],
+      },
+      {
+        name: "Backup & Restore",
+        icon: Database,
+        path: "/backup",
+        key: "backup",
+        roles: ["super_admin"],
       }
     );
   }
