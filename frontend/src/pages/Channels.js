@@ -231,6 +231,53 @@ export default function Channels({ user, onLogout }) {
     setPlayerOpen(true);
   };
 
+  const handleSelectChannel = (channel) => {
+    const isSelected = selectedChannels.some(c => c.url === channel.url);
+    if (isSelected) {
+      setSelectedChannels(selectedChannels.filter(c => c.url !== channel.url));
+    } else {
+      setSelectedChannels([...selectedChannels, channel]);
+    }
+  };
+
+  const handleSelectAll = () => {
+    if (selectedChannels.length === channels.length) {
+      setSelectedChannels([]);
+    } else {
+      setSelectedChannels([...channels]);
+    }
+  };
+
+  const handleExportM3U = () => {
+    if (selectedChannels.length === 0) {
+      toast.error("No channels selected");
+      return;
+    }
+
+    // Generate M3U content
+    let m3uContent = '#EXTM3U\n';
+    
+    selectedChannels.forEach(channel => {
+      const tvgLogo = channel.logo ? ` tvg-logo="${channel.logo}"` : '';
+      const groupTitle = channel.group ? ` group-title="${channel.group}"` : '';
+      m3uContent += `#EXTINF:-1${tvgLogo}${groupTitle},${channel.name}\n`;
+      m3uContent += `${channel.url}\n`;
+    });
+
+    // Create blob and download
+    const blob = new Blob([m3uContent], { type: 'audio/x-mpegurl' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `exported_channels_${Date.now()}.m3u`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success(`Exported ${selectedChannels.length} channels to M3U file`);
+  };
+
   return (
     <Layout user={user} onLogout={onLogout} currentPage="channels">
       <div className="space-y-6" data-testid="channels-page">
