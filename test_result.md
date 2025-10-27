@@ -113,39 +113,48 @@ user_problem_statement: |
 backend:
   - task: "FFmpeg stream probing endpoint"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added async probe_stream_ffmpeg() function using subprocess to call ffprobe. Extracts format, duration, bitrate, video (codec, resolution, fps), audio (codec, sample rate, channels). Added /api/channels/probe-ffmpeg endpoint. Installed ffmpeg system package."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: FFmpeg probing endpoint working correctly. POST /api/channels/probe-ffmpeg accepts stream URLs and returns detailed probe data including online status, format, bitrate, video_codec, video_resolution, video_fps, audio_codec, audio_sample_rate, audio_channels. Error handling works properly for invalid/offline URLs. All required response fields are present."
   
   - task: "Profile image upload API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added profile_image field to User model (base64 PNG). Updated UserUpdate model. Added /api/profile/update endpoint with PNG validation and 2MB size limit."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: Profile image upload working perfectly. PUT /api/profile/update accepts base64 PNG data, validates format and size. Profile image is stored and returned in GET /api/auth/me. Image removal with profile_image=null works correctly. PNG validation and 2MB size limit enforced."
   
   - task: "Backup & Restore API"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Added 4 new endpoints: /api/backup/full (export all collections), /api/backup/tenant/{id} (export single tenant), /api/restore/full (restore full DB), /api/restore/tenant (restore single tenant). All super admin only."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: Backup & Restore APIs working correctly. GET /api/backup/full returns JSON with 'collections' key containing users, tenants, m3u_playlists data. GET /api/backup/tenant/{id} returns tenant-specific data. Both restore endpoints exist and properly handle invalid data with 400 status. Super admin authentication enforced."
 
 frontend:
   - task: "FFmpeg probe display with detailed modal"
