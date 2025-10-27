@@ -34,10 +34,10 @@ export default function Layout({ user, onLogout, children, currentPage }) {
         roles: ["super_admin"],
       },
       {
-        name: "Backup & Restore",
-        icon: Database,
-        path: "/backup",
-        key: "backup",
+        name: "Settings",
+        icon: SettingsIcon,
+        path: "/settings",
+        key: "settings",
         roles: ["super_admin"],
       }
     );
