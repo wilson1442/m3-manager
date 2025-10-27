@@ -132,6 +132,26 @@ function App() {
             }
           />
           <Route
+            path="/categories"
+            element={
+              isAuthenticated ? (
+                <Categories user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              isAuthenticated ? (
+                <Events user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
             path="/"
             element={
               isAuthenticated ? (
