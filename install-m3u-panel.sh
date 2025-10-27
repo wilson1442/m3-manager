@@ -457,7 +457,12 @@ echo ""
 print_header "ACCESS INFORMATION"
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "Web Interface:     http://$DOMAIN"
+if [ "$USE_CLOUDFLARE" = "y" ]; then
+    echo "Web Interface:     $CLOUDFLARE_URL"
+    echo "Local Access:      http://$DOMAIN"
+else
+    echo "Web Interface:     http://$DOMAIN"
+fi
 echo "Admin Username:    $ADMIN_USER"
 echo "Admin Password:    $ADMIN_PASS"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -470,6 +475,13 @@ echo "Frontend Service:        m3u-frontend"
 echo "MongoDB Service:         mongod"
 echo "Nginx Service:           nginx"
 echo ""
+if [ "$USE_CLOUDFLARE" = "y" ]; then
+    echo "Cloudflare Tunnel:       CONFIGURED"
+    echo "Cloudflare URL:          $CLOUDFLARE_URL"
+    echo "Backend URL (Frontend):  $CLOUDFLARE_URL"
+    echo "CORS Origins:            $CORS_ORIGINS"
+    echo ""
+fi
 echo "Python Virtual Environment: $INSTALL_DIR/backend/venv"
 echo ""
 print_header "USEFUL COMMANDS"
