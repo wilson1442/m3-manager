@@ -153,9 +153,26 @@ export default function Channels({ user, onLogout }) {
     }
   };
 
-  const handleCopyUrl = (url) => {
-    navigator.clipboard.writeText(url);
-    toast.success("Stream URL copied to clipboard!");
+  const handleCopyUrl = async (url) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Stream URL copied to clipboard!");
+    } catch (error) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success("Stream URL copied to clipboard!");
+      } catch (err) {
+        toast.error("Failed to copy URL. Please copy manually.");
+      }
+      document.body.removeChild(textArea);
+    }
   };
 
   const handleProbe = async (channel) => {
