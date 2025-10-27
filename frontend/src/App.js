@@ -153,6 +153,16 @@ function App() {
             }
           />
           <Route
+            path="/backup"
+            element={
+              isAuthenticated ? (
+                <BackupRestore user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
             path="/"
             element={
               isAuthenticated ? (
