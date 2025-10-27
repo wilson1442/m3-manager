@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Copy, Play, RefreshCw } from "lucide-react";
+import { Copy, Play, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -14,12 +16,22 @@ export default function Events({ user, onLogout }) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [groupedChannels, setGroupedChannels] = useState({});
+  const [openCategories, setOpenCategories] = useState({});
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchChannels();
   }, []);
+
+  useEffect(() => {
+    // Auto-open all categories by default
+    const allOpen = {};
+    Object.keys(groupedChannels).forEach(category => {
+      allOpen[category] = true;
+    });
+    setOpenCategories(allOpen);
+  }, [groupedChannels]);
 
   const fetchChannels = async () => {
     setLoading(true);
@@ -69,6 +81,13 @@ export default function Events({ user, onLogout }) {
     }
   };
 
+  const toggleCategory = (category) => {
+    setOpenCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
   return (
     <Layout user={user} onLogout={onLogout} currentPage="events">
       <div className="space-y-6" data-testid="events-page">
@@ -104,71 +123,90 @@ export default function Events({ user, onLogout }) {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {Object.entries(groupedChannels).map(([category, categoryChannels]) => (
               <Card key={category} data-testid={`category-${category}`}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-2xl">{category}</CardTitle>
-                      <CardDescription>{categoryChannels.length} channels</CardDescription>
-                    </div>
-                    <Badge variant="secondary" className="text-lg px-3 py-1">
-                      {categoryChannels.length}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {categoryChannels.map((channel, index) => (
-                      <div
-                        key={index}
-                        data-testid={`channel-${category}-${index}`}
-                        className="border rounded-lg p-4 hover:bg-accent transition-colors"
-                      >
-                        <div className="flex items-start gap-3">
-                          {channel.logo && (
-                            <img 
-                              src={channel.logo} 
-                              alt={channel.name} 
-                              className="w-12 h-12 rounded object-cover"
-                              onError={(e) => e.target.style.display = 'none'}
-                            />
+                <Collapsible
+                  open={openCategories[category]}
+                  onOpenChange={() => toggleCategory(category)}
+                >
+                  <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
+                    <CollapsibleTrigger className="w-full" data-testid={`toggle-${category}`}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          {openCategories[category] ? (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronRight className="h-5 w-5 text-muted-foreground" />
                           )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-sm line-clamp-2 mb-1">
-                              {channel.name}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {channel.playlist_name}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="flex-1"
-                            onClick={() => handleCopyUrl(channel.url)}
-                            data-testid={`copy-${category}-${index}`}
-                          >
-                            <Copy className="h-3 w-3 mr-1" />
-                            Copy
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => window.open(channel.url, '_blank')}
-                            data-testid={`play-${category}-${index}`}
-                          >
-                            <Play className="h-3 w-3 mr-1" />
-                            Play
-                          </Button>
+                          <CardTitle className="text-2xl">{category}</CardTitle>
+                          <Badge variant="secondary" className="text-sm">
+                            {categoryChannels.length} channels
+                          </Badge>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
+                    </CollapsibleTrigger>
+                  </CardHeader>
+                  <CollapsibleContent>
+                    <CardContent>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="w-[50px]">Logo</TableHead>
+                            <TableHead>Channel Name</TableHead>
+                            <TableHead>Playlist</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {categoryChannels.map((channel, index) => (
+                            <TableRow key={index} data-testid={`channel-${category}-${index}`}>
+                              <TableCell>
+                                {channel.logo ? (
+                                  <img 
+                                    src={channel.logo} 
+                                    alt={channel.name} 
+                                    className="w-10 h-10 rounded object-cover"
+                                    onError={(e) => e.target.style.display = 'none'}
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                                    N/A
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell className="font-medium">{channel.name}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">
+                                {channel.playlist_name}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleCopyUrl(channel.url)}
+                                    data-testid={`copy-${category}-${index}`}
+                                  >
+                                    <Copy className="h-3 w-3 mr-1" />
+                                    Copy
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => window.open(channel.url, '_blank')}
+                                    data-testid={`play-${category}-${index}`}
+                                  >
+                                    <Play className="h-3 w-3 mr-1" />
+                                    Play
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
               </Card>
             ))}
           </div>
