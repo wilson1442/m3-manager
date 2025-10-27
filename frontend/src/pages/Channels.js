@@ -26,6 +26,8 @@ export default function Channels({ user, onLogout }) {
   const [playerOpen, setPlayerOpen] = useState(false);
   const [currentStream, setCurrentStream] = useState(null);
   const [selectedChannels, setSelectedChannels] = useState([]);
+  const [playerError, setPlayerError] = useState(null);
+  const [playerReady, setPlayerReady] = useState(false);
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
