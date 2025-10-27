@@ -508,6 +508,22 @@ class StreamProbeResult(BaseModel):
     stream_type: Optional[str] = None
     variants: Optional[List[dict]] = None
 
+class FFmpegProbeResult(BaseModel):
+    url: str
+    online: bool
+    status: str
+    format: Optional[str] = None
+    duration: Optional[str] = None
+    bitrate: Optional[str] = None
+    video_codec: Optional[str] = None
+    video_resolution: Optional[str] = None
+    video_fps: Optional[str] = None
+    audio_codec: Optional[str] = None
+    audio_sample_rate: Optional[str] = None
+    audio_channels: Optional[str] = None
+    error: Optional[str] = None
+    raw_data: Optional[dict] = None
+
 class MonitoredCategory(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
