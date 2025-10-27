@@ -107,6 +107,90 @@ export default function Settings({ user, onLogout }) {
     }
   };
 
+  const loadSystemSettings = async () => {
+    try {
+      const response = await axios.get(`${API}/system/settings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSystemSettings(response.data);
+    } catch (error) {
+      console.error("Failed to load system settings:", error);
+    }
+  };
+
+  const handleUpdateSystemSettings = async () => {
+    try {
+      await axios.put(
+        `${API}/system/settings`,
+        {
+          production_repo_url: systemSettings.production_repo_url,
+          beta_repo_url: systemSettings.beta_repo_url
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("System settings updated successfully!");
+      loadSystemSettings();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update settings");
+    }
+  };
+
+  const handlePullUpdate = async (branch) => {
+    if (!window.confirm(`⚠️ WARNING: This will pull updates from the ${branch} repository. A backup will be created automatically. Continue?`)) {
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const response = await axios.post(
+        `${API}/system/update`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { branch }
+        }
+      );
+
+      toast.success(response.data.message);
+      loadSystemSettings();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to pull updates");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeploy = async () => {
+    if (!window.confirm(`⚠️ WARNING: This will rebuild the application and restart services. You will be disconnected briefly. Continue?`)) {
+      return;
+    }
+
+    setDeploying(true);
+    try {
+      const response = await axios.post(
+        `${API}/system/deploy`,
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success(response.data.message);
+      
+      // Show countdown and reload
+      toast.info("Reloading page in 15 seconds...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 15000);
+      
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to deploy updates");
+      setDeploying(false);
+    }
+  };
+
   const handleBackupFull = async () => {
     setLoading(true);
     try {
