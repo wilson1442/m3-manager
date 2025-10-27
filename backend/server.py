@@ -302,6 +302,123 @@ async def fetch_player_api_data(player_api_url: str) -> dict:
     
     return result
 
+async def probe_stream_ffmpeg(url: str) -> dict:
+    """Use FFmpeg/ffprobe to get detailed stream information"""
+    result = {
+        "url": url,
+        "online": False,
+        "status": "unknown",
+        "format": None,
+        "duration": None,
+        "bitrate": None,
+        "video_codec": None,
+        "video_resolution": None,
+        "video_fps": None,
+        "audio_codec": None,
+        "audio_sample_rate": None,
+        "audio_channels": None,
+        "error": None,
+        "raw_data": {}
+    }
+    
+    try:
+        # Run ffprobe with JSON output
+        cmd = [
+            'ffprobe',
+            '-v', 'quiet',
+            '-print_format', 'json',
+            '-show_format',
+            '-show_streams',
+            '-timeout', '10000000',  # 10 seconds timeout in microseconds
+            url
+        ]
+        
+        # Run ffprobe
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=15)
+        
+        if process.returncode == 0:
+            # Parse JSON output
+            data = json.loads(stdout.decode('utf-8'))
+            result["raw_data"] = data
+            result["online"] = True
+            result["status"] = "online"
+            
+            # Extract format information
+            if 'format' in data:
+                fmt = data['format']
+                result["format"] = fmt.get('format_long_name') or fmt.get('format_name')
+                if 'duration' in fmt:
+                    try:
+                        duration_sec = float(fmt['duration'])
+                        result["duration"] = f"{int(duration_sec // 60)}:{int(duration_sec % 60):02d}"
+                    except:
+                        pass
+                if 'bit_rate' in fmt:
+                    try:
+                        bitrate_kbps = int(fmt['bit_rate']) / 1000
+                        result["bitrate"] = f"{bitrate_kbps:.0f} kbps"
+                    except:
+                        pass
+            
+            # Extract stream information
+            if 'streams' in data:
+                for stream in data['streams']:
+                    codec_type = stream.get('codec_type')
+                    
+                    if codec_type == 'video' and not result["video_codec"]:
+                        result["video_codec"] = stream.get('codec_long_name') or stream.get('codec_name')
+                        
+                        # Get resolution
+                        width = stream.get('width')
+                        height = stream.get('height')
+                        if width and height:
+                            result["video_resolution"] = f"{width}x{height}"
+                        
+                        # Get FPS
+                        fps = stream.get('r_frame_rate')
+                        if fps:
+                            try:
+                                # fps is usually in format "30/1" or "30000/1001"
+                                num, den = fps.split('/')
+                                fps_val = int(num) / int(den)
+                                result["video_fps"] = f"{fps_val:.2f} fps"
+                            except:
+                                pass
+                    
+                    elif codec_type == 'audio' and not result["audio_codec"]:
+                        result["audio_codec"] = stream.get('codec_long_name') or stream.get('codec_name')
+                        
+                        # Get sample rate
+                        sample_rate = stream.get('sample_rate')
+                        if sample_rate:
+                            result["audio_sample_rate"] = f"{int(sample_rate) / 1000:.1f} kHz"
+                        
+                        # Get channels
+                        channels = stream.get('channels')
+                        if channels:
+                            result["audio_channels"] = f"{channels} ch"
+        else:
+            # Error occurred
+            error_msg = stderr.decode('utf-8') if stderr else "Unknown error"
+            result["status"] = "offline"
+            result["error"] = f"FFprobe error: {error_msg[:200]}"
+            
+    except asyncio.TimeoutError:
+        result["status"] = "timeout"
+        result["error"] = "Stream connection timeout (15s)"
+    except Exception as e:
+        result["status"] = "error"
+        result["error"] = f"Error: {str(e)}"
+        logger.error(f"Error probing stream with ffmpeg: {str(e)}")
+    
+    return result
+
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
