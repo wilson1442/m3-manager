@@ -194,16 +194,19 @@ frontend:
         comment: "Created new BackupRestore.js page for super admins only. Features: Download full DB backup or tenant-specific backup as JSON. Upload and restore from backup files with confirmation warnings. Added route to App.js and link in Layout navigation."
   
   - task: "HLS web player fixes"
-    implemented: false
-    working: false
+    implemented: true
+    working: "NA"
     file: "/app/frontend/src/pages/Channels.js"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
         comment: "User reported HLS player opens stream URL in browser but doesn't play in embedded player (black screen). This is a persistent issue from previous work."
+      - working: "NA"
+        agent: "main"
+        comment: "Implemented comprehensive HLS player fixes: (1) Improved HLS.js configuration with better timeout and retry settings, (2) Added player state tracking (playerReady, playerError), (3) Enhanced error handling with detailed logging, (4) Added manual Play/Pause/Restart buttons as fallback for autoplay issues, (5) Improved video element configuration with autoPlay and proper cleanup, (6) Added loading spinner and status messages, (7) Better dialog cleanup when closing player, (8) Added MEDIA_ATTACHED event listener. Changes should resolve black screen and improve stream compatibility."
 
 metadata:
   created_by: "main_agent"
