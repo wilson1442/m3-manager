@@ -230,6 +230,20 @@ export default function M3UManagement({ user, onLogout }) {
                       rows={4}
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="player_api">Player API URL (Optional)</Label>
+                    <Input
+                      id="player_api"
+                      data-testid="playlist-player-api-input"
+                      type="url"
+                      placeholder="https://..."
+                      value={formData.player_api}
+                      onChange={(e) => setFormData({ ...formData, player_api: e.target.value })}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      URL that returns JSON with max_connections, active_connections, and expiration info
+                    </p>
+                  </div>
                   <Button type="submit" data-testid="submit-add-playlist-btn" className="w-full">
                     Add Playlist
                   </Button>
