@@ -313,11 +313,13 @@ class M3UPlaylistCreate(BaseModel):
     name: str
     url: str
     content: Optional[str] = None
+    player_api: Optional[str] = None
 
 class M3UPlaylistUpdate(BaseModel):
     name: Optional[str] = None
     url: Optional[str] = None
     content: Optional[str] = None
+    player_api: Optional[str] = None
 
 class Channel(BaseModel):
     name: str
