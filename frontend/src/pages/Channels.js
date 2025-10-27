@@ -258,15 +258,58 @@ export default function Channels({ user, onLogout }) {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {channelStatus[channel.url] && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Radio className={`h-4 w-4 ${channelStatus[channel.url].online ? 'text-green-500' : 'text-red-500'}`} />
-                      <span className={channelStatus[channel.url].online ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                        {channelStatus[channel.url].online ? 'Online' : 'Offline'}
-                      </span>
-                      {channelStatus[channel.url].response_time && (
-                        <span className="text-muted-foreground">
-                          ({channelStatus[channel.url].response_time.toFixed(2)}s)
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Radio className={`h-4 w-4 ${channelStatus[channel.url].online ? 'text-green-500' : 'text-red-500'}`} />
+                        <span className={channelStatus[channel.url].online ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                          {channelStatus[channel.url].online ? 'Online' : 'Offline'}
                         </span>
+                        {channelStatus[channel.url].response_time && (
+                          <span className="text-muted-foreground">
+                            ({channelStatus[channel.url].response_time.toFixed(2)}s)
+                          </span>
+                        )}
+                      </div>
+                      
+                      {channelStatus[channel.url].online && (
+                        <div className="text-xs space-y-1 text-muted-foreground">
+                          {channelStatus[channel.url].stream_type && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Type:</span>
+                              <span>{channelStatus[channel.url].stream_type}</span>
+                            </div>
+                          )}
+                          {channelStatus[channel.url].resolution && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Resolution:</span>
+                              <span className="font-mono">{channelStatus[channel.url].resolution}</span>
+                            </div>
+                          )}
+                          {channelStatus[channel.url].bitrate && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Bitrate:</span>
+                              <span className="font-mono">{channelStatus[channel.url].bitrate}</span>
+                            </div>
+                          )}
+                          {channelStatus[channel.url].video_codec && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Video:</span>
+                              <span className="font-mono text-xs">{channelStatus[channel.url].video_codec}</span>
+                            </div>
+                          )}
+                          {channelStatus[channel.url].audio_codec && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Audio:</span>
+                              <span className="font-mono text-xs">{channelStatus[channel.url].audio_codec}</span>
+                            </div>
+                          )}
+                          {channelStatus[channel.url].variants && channelStatus[channel.url].variants.length > 1 && (
+                            <div className="flex justify-between">
+                              <span className="font-medium">Variants:</span>
+                              <span>{channelStatus[channel.url].variants.length} qualities available</span>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   )}
