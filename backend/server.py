@@ -1403,6 +1403,301 @@ async def restore_tenant(backup_data: dict, current_user: User = Depends(get_cur
         logger.error(f"Error restoring tenant backup: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
 
+# Scheduled Backup Management
+async def perform_scheduled_backup(schedule_id: str):
+    """Execute a scheduled backup"""
+    try:
+        schedule = await db.backup_schedules.find_one({"id": schedule_id}, {"_id": 0})
+        if not schedule or not schedule.get('enabled'):
+            return
+        
+        backup_data = {}
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        
+        if schedule['schedule_type'] == 'full':
+            # Full database backup
+            backup_data = {
+                "backup_date": datetime.now(timezone.utc).isoformat(),
+                "backup_type": "full",
+                "schedule_id": schedule_id,
+                "collections": {}
+            }
+            
+            collections = ["users", "tenants", "m3u_playlists", "monitored_categories"]
+            for collection_name in collections:
+                collection = db[collection_name]
+                docs = await collection.find({}, {"_id": 0}).to_list(10000)
+                for doc in docs:
+                    for key, value in doc.items():
+                        if isinstance(value, datetime):
+                            doc[key] = value.isoformat()
+                backup_data["collections"][collection_name] = docs
+            
+            filename = f"full_backup_{timestamp}.json"
+        else:
+            # Tenant backup
+            tenant_id = schedule['tenant_id']
+            tenant = await db.tenants.find_one({"id": tenant_id}, {"_id": 0})
+            if not tenant:
+                logger.error(f"Tenant {tenant_id} not found for scheduled backup")
+                return
+            
+            backup_data = {
+                "backup_date": datetime.now(timezone.utc).isoformat(),
+                "backup_type": "tenant",
+                "schedule_id": schedule_id,
+                "tenant_id": tenant_id,
+                "tenant_name": tenant.get("name"),
+                "data": {}
+            }
+            
+            if tenant.get('created_at') and isinstance(tenant['created_at'], datetime):
+                tenant['created_at'] = tenant['created_at'].isoformat()
+            backup_data["data"]["tenant"] = tenant
+            
+            users = await db.users.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+            for user in users:
+                if user.get('created_at') and isinstance(user['created_at'], datetime):
+                    user['created_at'] = user['created_at'].isoformat()
+            backup_data["data"]["users"] = users
+            
+            playlists = await db.m3u_playlists.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+            for playlist in playlists:
+                for date_field in ['created_at', 'updated_at', 'last_refresh', 'api_last_checked']:
+                    if playlist.get(date_field) and isinstance(playlist[date_field], datetime):
+                        playlist[date_field] = playlist[date_field].isoformat()
+            backup_data["data"]["m3u_playlists"] = playlists
+            
+            categories = await db.monitored_categories.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+            for category in categories:
+                if category.get('created_at') and isinstance(category['created_at'], datetime):
+                    category['created_at'] = category['created_at'].isoformat()
+            backup_data["data"]["monitored_categories"] = categories
+            
+            filename = f"tenant_{tenant.get('name', tenant_id)}_{timestamp}.json"
+        
+        # Save backup to file
+        backup_file = BACKUP_DIR / filename
+        with open(backup_file, 'w') as f:
+            json.dump(backup_data, f, indent=2)
+        
+        # Update last run time
+        await db.backup_schedules.update_one(
+            {"id": schedule_id},
+            {"$set": {"last_run": datetime.now(timezone.utc)}}
+        )
+        
+        # Clean up old backups based on retention policy
+        await cleanup_old_backups(schedule_id, schedule['retention_days'])
+        
+        logger.info(f"Scheduled backup completed: {filename}")
+        
+    except Exception as e:
+        logger.error(f"Error in scheduled backup {schedule_id}: {str(e)}")
+
+async def cleanup_old_backups(schedule_id: str, retention_days: int):
+    """Remove backup files older than retention period"""
+    try:
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
+        
+        for backup_file in BACKUP_DIR.glob("*.json"):
+            if backup_file.stat().st_mtime < cutoff_date.timestamp():
+                # Check if file belongs to this schedule (read and verify)
+                try:
+                    with open(backup_file, 'r') as f:
+                        data = json.load(f)
+                        if data.get('schedule_id') == schedule_id:
+                            backup_file.unlink()
+                            logger.info(f"Deleted old backup: {backup_file.name}")
+                except:
+                    pass
+    except Exception as e:
+        logger.error(f"Error cleaning up old backups: {str(e)}")
+
+@api_router.get("/backup/schedules", response_model=List[BackupSchedule])
+async def get_backup_schedules(current_user: User = Depends(get_current_user)):
+    """Get all backup schedules (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can view backup schedules")
+    
+    schedules = await db.backup_schedules.find({}, {"_id": 0}).to_list(100)
+    for schedule in schedules:
+        if schedule.get('created_at') and isinstance(schedule['created_at'], str):
+            schedule['created_at'] = datetime.fromisoformat(schedule['created_at'])
+        if schedule.get('last_run') and isinstance(schedule['last_run'], str):
+            schedule['last_run'] = datetime.fromisoformat(schedule['last_run'])
+    
+    return schedules
+
+@api_router.post("/backup/schedules", response_model=BackupSchedule)
+async def create_backup_schedule(schedule_data: BackupScheduleCreate, current_user: User = Depends(get_current_user)):
+    """Create a new backup schedule (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can create backup schedules")
+    
+    if schedule_data.schedule_type not in ["full", "tenant"]:
+        raise HTTPException(status_code=400, detail="Schedule type must be 'full' or 'tenant'")
+    
+    if schedule_data.schedule_type == "tenant" and not schedule_data.tenant_id:
+        raise HTTPException(status_code=400, detail="Tenant ID required for tenant backup schedule")
+    
+    if schedule_data.frequency not in ["daily", "weekly"]:
+        raise HTTPException(status_code=400, detail="Frequency must be 'daily' or 'weekly'")
+    
+    if schedule_data.retention_days < 1:
+        raise HTTPException(status_code=400, detail="Retention days must be at least 1")
+    
+    schedule = BackupSchedule(
+        schedule_type=schedule_data.schedule_type,
+        tenant_id=schedule_data.tenant_id,
+        frequency=schedule_data.frequency,
+        retention_days=schedule_data.retention_days,
+        created_by=current_user.id
+    )
+    
+    schedule_doc = schedule.model_dump()
+    schedule_doc['created_at'] = schedule_doc['created_at'].isoformat()
+    
+    await db.backup_schedules.insert_one(schedule_doc)
+    
+    # Add job to scheduler
+    if schedule.frequency == "daily":
+        scheduler.add_job(
+            perform_scheduled_backup,
+            'cron',
+            hour=2,  # Run at 2 AM
+            args=[schedule.id],
+            id=f"backup_{schedule.id}",
+            replace_existing=True
+        )
+    else:  # weekly
+        scheduler.add_job(
+            perform_scheduled_backup,
+            'cron',
+            day_of_week='sun',
+            hour=2,  # Run at 2 AM on Sundays
+            args=[schedule.id],
+            id=f"backup_{schedule.id}",
+            replace_existing=True
+        )
+    
+    logger.info(f"Created backup schedule: {schedule.id}")
+    return schedule
+
+@api_router.put("/backup/schedules/{schedule_id}", response_model=BackupSchedule)
+async def update_backup_schedule(schedule_id: str, update_data: BackupScheduleUpdate, current_user: User = Depends(get_current_user)):
+    """Update a backup schedule (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can update backup schedules")
+    
+    schedule = await db.backup_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Backup schedule not found")
+    
+    update_fields = {}
+    if update_data.frequency is not None:
+        if update_data.frequency not in ["daily", "weekly"]:
+            raise HTTPException(status_code=400, detail="Frequency must be 'daily' or 'weekly'")
+        update_fields['frequency'] = update_data.frequency
+    
+    if update_data.retention_days is not None:
+        if update_data.retention_days < 1:
+            raise HTTPException(status_code=400, detail="Retention days must be at least 1")
+        update_fields['retention_days'] = update_data.retention_days
+    
+    if update_data.enabled is not None:
+        update_fields['enabled'] = update_data.enabled
+    
+    if update_fields:
+        await db.backup_schedules.update_one({"id": schedule_id}, {"$set": update_fields})
+        
+        # Update scheduler job
+        if 'frequency' in update_fields or 'enabled' in update_fields:
+            try:
+                scheduler.remove_job(f"backup_{schedule_id}")
+            except:
+                pass
+            
+            if update_fields.get('enabled', schedule['enabled']):
+                frequency = update_fields.get('frequency', schedule['frequency'])
+                if frequency == "daily":
+                    scheduler.add_job(
+                        perform_scheduled_backup,
+                        'cron',
+                        hour=2,
+                        args=[schedule_id],
+                        id=f"backup_{schedule_id}",
+                        replace_existing=True
+                    )
+                else:
+                    scheduler.add_job(
+                        perform_scheduled_backup,
+                        'cron',
+                        day_of_week='sun',
+                        hour=2,
+                        args=[schedule_id],
+                        id=f"backup_{schedule_id}",
+                        replace_existing=True
+                    )
+    
+    updated_schedule = await db.backup_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if updated_schedule.get('created_at') and isinstance(updated_schedule['created_at'], str):
+        updated_schedule['created_at'] = datetime.fromisoformat(updated_schedule['created_at'])
+    if updated_schedule.get('last_run') and isinstance(updated_schedule['last_run'], str):
+        updated_schedule['last_run'] = datetime.fromisoformat(updated_schedule['last_run'])
+    
+    return BackupSchedule(**updated_schedule)
+
+@api_router.delete("/backup/schedules/{schedule_id}")
+async def delete_backup_schedule(schedule_id: str, current_user: User = Depends(get_current_user)):
+    """Delete a backup schedule (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can delete backup schedules")
+    
+    schedule = await db.backup_schedules.find_one({"id": schedule_id})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Backup schedule not found")
+    
+    # Remove from scheduler
+    try:
+        scheduler.remove_job(f"backup_{schedule_id}")
+    except:
+        pass
+    
+    await db.backup_schedules.delete_one({"id": schedule_id})
+    
+    return {"message": "Backup schedule deleted successfully"}
+
+@api_router.get("/backup/files")
+async def list_backup_files(current_user: User = Depends(get_current_user)):
+    """List all backup files (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can list backup files")
+    
+    files = []
+    for backup_file in BACKUP_DIR.glob("*.json"):
+        stat = backup_file.stat()
+        files.append({
+            "filename": backup_file.name,
+            "size": stat.st_size,
+            "created_at": datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc).isoformat()
+        })
+    
+    return sorted(files, key=lambda x: x['created_at'], reverse=True)
+
+@api_router.get("/backup/files/{filename}")
+async def download_backup_file(filename: str, current_user: User = Depends(get_current_user)):
+    """Download a backup file (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can download backup files")
+    
+    backup_file = BACKUP_DIR / filename
+    if not backup_file.exists() or not backup_file.is_file():
+        raise HTTPException(status_code=404, detail="Backup file not found")
+    
+    with open(backup_file, 'r') as f:
+        return json.load(f)
+
 # Include the router in the main app
 app.include_router(api_router)
 
