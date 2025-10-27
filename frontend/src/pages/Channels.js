@@ -391,53 +391,51 @@ export default function Channels({ user, onLogout }) {
                       <div className="flex items-center gap-2 text-sm">
                         <Radio className={`h-4 w-4 ${channelStatus[channel.url].online ? 'text-green-500' : 'text-red-500'}`} />
                         <span className={channelStatus[channel.url].online ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                          {channelStatus[channel.url].online ? 'Online' : 'Offline'}
+                          {channelStatus[channel.url].online ? 'Online' : channelStatus[channel.url].status || 'Offline'}
                         </span>
-                        {channelStatus[channel.url].response_time && (
-                          <span className="text-muted-foreground">
-                            ({channelStatus[channel.url].response_time.toFixed(2)}s)
-                          </span>
-                        )}
                       </div>
                       
-                      {channelStatus[channel.url].online && (
+                      {/* FFmpeg probe data inline display */}
+                      {ffmpegProbeData[channel.url] && ffmpegProbeData[channel.url].online && (
                         <div className="text-xs space-y-1 text-muted-foreground bg-muted/50 p-3 rounded-md">
-                          {channelStatus[channel.url].stream_type && (
+                          {ffmpegProbeData[channel.url].format && (
                             <div className="flex gap-2">
-                              <span className="font-medium min-w-[80px]">Type:</span>
-                              <span>{channelStatus[channel.url].stream_type}</span>
+                              <span className="font-medium min-w-[80px]">Format:</span>
+                              <span>{ffmpegProbeData[channel.url].format}</span>
                             </div>
                           )}
-                          {channelStatus[channel.url].resolution && (
+                          {ffmpegProbeData[channel.url].video_resolution && (
                             <div className="flex gap-2">
                               <span className="font-medium min-w-[80px]">Resolution:</span>
-                              <span className="font-mono">{channelStatus[channel.url].resolution}</span>
+                              <span className="font-mono">{ffmpegProbeData[channel.url].video_resolution}</span>
                             </div>
                           )}
-                          {channelStatus[channel.url].bitrate && (
+                          {ffmpegProbeData[channel.url].bitrate && (
                             <div className="flex gap-2">
                               <span className="font-medium min-w-[80px]">Bitrate:</span>
-                              <span className="font-mono">{channelStatus[channel.url].bitrate}</span>
+                              <span className="font-mono">{ffmpegProbeData[channel.url].bitrate}</span>
                             </div>
                           )}
-                          {channelStatus[channel.url].video_codec && (
+                          {ffmpegProbeData[channel.url].video_codec && (
                             <div className="flex gap-2">
                               <span className="font-medium min-w-[80px]">Video:</span>
-                              <span className="font-mono text-xs">{channelStatus[channel.url].video_codec}</span>
+                              <span className="font-mono text-xs">{ffmpegProbeData[channel.url].video_codec.substring(0, 30)}</span>
                             </div>
                           )}
-                          {channelStatus[channel.url].audio_codec && (
-                            <div className="flex gap-2">
-                              <span className="font-medium min-w-[80px]">Audio:</span>
-                              <span className="font-mono text-xs">{channelStatus[channel.url].audio_codec}</span>
-                            </div>
-                          )}
-                          {channelStatus[channel.url].variants && channelStatus[channel.url].variants.length > 1 && (
-                            <div className="flex gap-2">
-                              <span className="font-medium min-w-[80px]">Variants:</span>
-                              <span>{channelStatus[channel.url].variants.length} qualities available</span>
-                            </div>
-                          )}
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0 text-xs"
+                            onClick={() => showDetails(channel)}
+                          >
+                            View Full Details →
+                          </Button>
+                        </div>
+                      )}
+                      
+                      {channelStatus[channel.url].error && (
+                        <div className="text-xs text-red-600 dark:text-red-400">
+                          {channelStatus[channel.url].error}
                         </div>
                       )}
                     </div>
