@@ -746,6 +746,127 @@ async def probe_channel(url: str, current_user: User = Depends(get_current_user)
     result = await probe_stream(url)
     return StreamProbeResult(**result)
 
+@api_router.get("/categories")
+async def get_categories(current_user: User = Depends(get_current_user)):
+    """Get all unique categories from playlists in user's tenant"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    # Get all playlists for the tenant
+    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    
+    categories = set()
+    
+    for playlist in playlists:
+        if playlist.get('content'):
+            channels = parse_m3u_content(playlist['content'])
+            
+            for channel in channels:
+                if channel.get('group'):
+                    categories.add(channel['group'])
+    
+    return sorted(list(categories))
+
+@api_router.post("/categories/monitor", response_model=MonitoredCategory)
+async def add_monitored_category(category_data: MonitoredCategoryCreate, current_user: User = Depends(get_current_user)):
+    """Add a category to monitor"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    # Check if already monitoring
+    existing = await db.monitored_categories.find_one({
+        "tenant_id": current_user.tenant_id,
+        "category": category_data.category
+    })
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already monitored")
+    
+    monitored = MonitoredCategory(
+        tenant_id=current_user.tenant_id,
+        category=category_data.category,
+        created_by=current_user.id
+    )
+    
+    monitored_doc = monitored.model_dump()
+    monitored_doc['created_at'] = monitored_doc['created_at'].isoformat()
+    
+    await db.monitored_categories.insert_one(monitored_doc)
+    
+    return monitored
+
+@api_router.get("/categories/monitor", response_model=List[MonitoredCategory])
+async def get_monitored_categories(current_user: User = Depends(get_current_user)):
+    """Get all monitored categories for user's tenant"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    categories = await db.monitored_categories.find(
+        {"tenant_id": current_user.tenant_id},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    for cat in categories:
+        if isinstance(cat['created_at'], str):
+            cat['created_at'] = datetime.fromisoformat(cat['created_at'])
+    
+    return categories
+
+@api_router.delete("/categories/monitor/{category_id}")
+async def remove_monitored_category(category_id: str, current_user: User = Depends(get_current_user)):
+    """Remove a monitored category"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    result = await db.monitored_categories.delete_one({
+        "id": category_id,
+        "tenant_id": current_user.tenant_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    
+    return {"message": "Category removed from monitoring"}
+
+@api_router.get("/events/channels")
+async def get_monitored_channels(current_user: User = Depends(get_current_user)):
+    """Get all channels from monitored categories"""
+    if not current_user.tenant_id:
+        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    
+    # Get monitored categories
+    monitored = await db.monitored_categories.find(
+        {"tenant_id": current_user.tenant_id},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    monitored_categories = [m['category'] for m in monitored]
+    
+    if not monitored_categories:
+        return []
+    
+    # Get all playlists for the tenant
+    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    
+    all_channels = []
+    
+    for playlist in playlists:
+        if playlist.get('content'):
+            channels = parse_m3u_content(playlist['content'])
+            
+            for channel in channels:
+                if channel.get('group') in monitored_categories:
+                    all_channels.append(Channel(
+                        name=channel.get('name', 'Unknown'),
+                        url=channel.get('url', ''),
+                        group=channel.get('group'),
+                        logo=channel.get('logo'),
+                        playlist_name=playlist['name'],
+                        playlist_id=playlist['id']
+                    ))
+    
+    return all_channels
+
 # Profile routes
 @api_router.put("/profile/theme")
 async def update_theme(theme_data: ThemeUpdate, current_user: User = Depends(get_current_user)):
