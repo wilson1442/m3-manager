@@ -403,6 +403,16 @@ export default function M3UManagement({ user, onLogout }) {
                   rows={4}
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-player-api">Player API URL (Optional)</Label>
+                <Input
+                  id="edit-player-api"
+                  data-testid="edit-playlist-player-api-input"
+                  type="url"
+                  value={formData.player_api}
+                  onChange={(e) => setFormData({ ...formData, player_api: e.target.value })}
+                />
+              </div>
               <Button type="submit" data-testid="submit-edit-playlist-btn" className="w-full">
                 Update Playlist
               </Button>
