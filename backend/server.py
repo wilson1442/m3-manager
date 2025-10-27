@@ -693,7 +693,17 @@ async def create_m3u(playlist_data: M3UPlaylistCreate, current_user: User = Depe
     
     await db.m3u_playlists.insert_one(playlist_doc)
     
-    return playlist
+    # Return the updated playlist with API data
+    updated_doc = await db.m3u_playlists.find_one({"id": playlist.id}, {"_id": 0})
+    
+    if isinstance(updated_doc['created_at'], str):
+        updated_doc['created_at'] = datetime.fromisoformat(updated_doc['created_at'])
+    if isinstance(updated_doc['updated_at'], str):
+        updated_doc['updated_at'] = datetime.fromisoformat(updated_doc['updated_at'])
+    if updated_doc.get('api_last_checked') and isinstance(updated_doc['api_last_checked'], str):
+        updated_doc['api_last_checked'] = datetime.fromisoformat(updated_doc['api_last_checked'])
+    
+    return M3UPlaylist(**updated_doc)
 
 @api_router.get("/m3u", response_model=List[M3UPlaylist])
 async def get_m3u_playlists(current_user: User = Depends(get_current_user)):
