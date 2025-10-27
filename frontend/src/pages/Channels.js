@@ -347,10 +347,28 @@ export default function Channels({ user, onLogout }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    navigator.clipboard.writeText(currentStream?.url);
-                    toast.success("Stream URL copied!");
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(currentStream?.url);
+                      toast.success("Stream URL copied!");
+                    } catch (error) {
+                      // Fallback for browsers that don't support clipboard API
+                      const textArea = document.createElement("textarea");
+                      textArea.value = currentStream?.url;
+                      textArea.style.position = "fixed";
+                      textArea.style.left = "-999999px";
+                      document.body.appendChild(textArea);
+                      textArea.select();
+                      try {
+                        document.execCommand('copy');
+                        toast.success("Stream URL copied!");
+                      } catch (err) {
+                        toast.error("Failed to copy URL");
+                      }
+                      document.body.removeChild(textArea);
+                    }
                   }}
+                  data-testid="copy-url-in-player"
                 >
                   Copy URL
                 </Button>
