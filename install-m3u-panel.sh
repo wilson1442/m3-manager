@@ -64,6 +64,22 @@ read -p "Enter your domain name (or press Enter to use IP: $SERVER_IP): " DOMAIN
 DOMAIN=${DOMAIN:-$SERVER_IP}
 print_info "Will use: $DOMAIN"
 
+# Ask about Cloudflare Tunnel
+print_header "CLOUDFLARE TUNNEL CONFIGURATION"
+read -p "Are you using Cloudflare Tunnel? (y/n): " USE_CLOUDFLARE
+USE_CLOUDFLARE=${USE_CLOUDFLARE:-n}
+
+CLOUDFLARE_URL=""
+if [ "$USE_CLOUDFLARE" = "y" ]; then
+    read -p "Enter your Cloudflare Tunnel URL (e.g., https://app.example.com): " CLOUDFLARE_URL
+    if [ -z "$CLOUDFLARE_URL" ]; then
+        print_error "Cloudflare URL cannot be empty"
+        exit 1
+    fi
+    print_info "Cloudflare Tunnel URL: $CLOUDFLARE_URL"
+    print_info "Note: Make sure your Cloudflare tunnel routes /api/* to localhost:8001 and / to localhost:3000"
+fi
+
 # Ask for admin credentials
 print_header "ADMIN CREDENTIALS"
 read -p "Enter admin username [admin]: " ADMIN_USER
