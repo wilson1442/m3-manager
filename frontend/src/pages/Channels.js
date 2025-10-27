@@ -556,6 +556,131 @@ export default function Channels({ user, onLogout }) {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* FFmpeg Details Dialog */}
+        <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Stream Details - {currentDetails?.channel?.name}</DialogTitle>
+              <DialogDescription>
+                Detailed technical information from FFmpeg probe
+              </DialogDescription>
+            </DialogHeader>
+            {currentDetails?.probeData && (
+              <div className="space-y-4">
+                {/* Status */}
+                <div className="bg-muted/50 p-4 rounded-lg">
+                  <h3 className="font-semibold mb-2">Status</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Online:</span>
+                      <span className={`ml-2 font-semibold ${currentDetails.probeData.online ? 'text-green-600' : 'text-red-600'}`}>
+                        {currentDetails.probeData.online ? 'Yes' : 'No'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Status:</span>
+                      <span className="ml-2">{currentDetails.probeData.status}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Format Information */}
+                {currentDetails.probeData.online && (
+                  <>
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">Format Information</h3>
+                      <div className="space-y-2 text-sm">
+                        {currentDetails.probeData.format && (
+                          <div>
+                            <span className="text-muted-foreground font-medium">Format:</span>
+                            <span className="ml-2">{currentDetails.probeData.format}</span>
+                          </div>
+                        )}
+                        {currentDetails.probeData.duration && (
+                          <div>
+                            <span className="text-muted-foreground font-medium">Duration:</span>
+                            <span className="ml-2">{currentDetails.probeData.duration}</span>
+                          </div>
+                        )}
+                        {currentDetails.probeData.bitrate && (
+                          <div>
+                            <span className="text-muted-foreground font-medium">Bitrate:</span>
+                            <span className="ml-2 font-mono">{currentDetails.probeData.bitrate}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Video Information */}
+                    {currentDetails.probeData.video_codec && (
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2">Video Stream</h3>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground font-medium">Codec:</span>
+                            <span className="ml-2 font-mono text-xs">{currentDetails.probeData.video_codec}</span>
+                          </div>
+                          {currentDetails.probeData.video_resolution && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Resolution:</span>
+                              <span className="ml-2 font-mono">{currentDetails.probeData.video_resolution}</span>
+                            </div>
+                          )}
+                          {currentDetails.probeData.video_fps && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Frame Rate:</span>
+                              <span className="ml-2 font-mono">{currentDetails.probeData.video_fps}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Audio Information */}
+                    {currentDetails.probeData.audio_codec && (
+                      <div className="bg-muted/50 p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2">Audio Stream</h3>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground font-medium">Codec:</span>
+                            <span className="ml-2 font-mono text-xs">{currentDetails.probeData.audio_codec}</span>
+                          </div>
+                          {currentDetails.probeData.audio_sample_rate && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Sample Rate:</span>
+                              <span className="ml-2 font-mono">{currentDetails.probeData.audio_sample_rate}</span>
+                            </div>
+                          )}
+                          {currentDetails.probeData.audio_channels && (
+                            <div>
+                              <span className="text-muted-foreground font-medium">Channels:</span>
+                              <span className="ml-2">{currentDetails.probeData.audio_channels}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Stream URL */}
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-2">Stream URL</h3>
+                      <p className="text-xs font-mono break-all">{currentDetails.probeData.url}</p>
+                    </div>
+                  </>
+                )}
+
+                {/* Error Information */}
+                {currentDetails.probeData.error && (
+                  <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                    <h3 className="font-semibold text-red-600 dark:text-red-400 mb-2">Error</h3>
+                    <p className="text-sm text-red-600 dark:text-red-400">{currentDetails.probeData.error}</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
