@@ -344,6 +344,218 @@ class M3UManagerAPITester:
                 description="Regular user tries to create user (should fail)"
             )
 
+    def test_ffmpeg_stream_probing(self):
+        """Test FFmpeg stream probing functionality"""
+        print("\n🎥 Testing FFmpeg Stream Probing...")
+        
+        if 'tenant_owner' not in self.tokens:
+            print("❌ Skipping - No tenant owner token available")
+            return False
+        
+        # First, search for channels to get a stream URL
+        success, channels = self.run_test(
+            "Search Channels",
+            "GET",
+            "channels/search?q=test",
+            200,
+            token=self.tokens.get('tenant_owner'),
+            description="Search for channels to get stream URLs"
+        )
+        
+        if not success or not channels:
+            print("   No channels found, using test URL")
+            test_url = "https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
+        else:
+            test_url = channels[0].get('url', 'https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8')
+            print(f"   Using stream URL: {test_url}")
+        
+        # Test FFmpeg probe with valid URL
+        success, probe_result = self.run_test(
+            "FFmpeg Probe Valid Stream",
+            "POST",
+            f"channels/probe-ffmpeg?url={test_url}",
+            200,
+            token=self.tokens.get('tenant_owner'),
+            description="Probe stream with FFmpeg for detailed info"
+        )
+        
+        if success:
+            print(f"   Stream status: {probe_result.get('status', 'unknown')}")
+            print(f"   Online: {probe_result.get('online', False)}")
+            if probe_result.get('format'):
+                print(f"   Format: {probe_result.get('format')}")
+            if probe_result.get('video_codec'):
+                print(f"   Video codec: {probe_result.get('video_codec')}")
+            if probe_result.get('video_resolution'):
+                print(f"   Resolution: {probe_result.get('video_resolution')}")
+            if probe_result.get('bitrate'):
+                print(f"   Bitrate: {probe_result.get('bitrate')}")
+        
+        # Test FFmpeg probe with invalid URL
+        invalid_url = "http://invalid-stream-url.com/nonexistent.m3u8"
+        success_invalid, probe_invalid = self.run_test(
+            "FFmpeg Probe Invalid Stream",
+            "POST",
+            f"channels/probe-ffmpeg?url={invalid_url}",
+            200,  # Should return 200 but with error in response
+            token=self.tokens.get('tenant_owner'),
+            description="Probe invalid stream URL (should handle gracefully)"
+        )
+        
+        if success_invalid:
+            print(f"   Invalid stream status: {probe_invalid.get('status', 'unknown')}")
+            print(f"   Error handled: {probe_invalid.get('error', 'No error info')}")
+        
+        return success
+
+    def test_profile_image_upload(self):
+        """Test profile image upload functionality"""
+        print("\n🖼️ Testing Profile Image Upload...")
+        
+        if 'super_admin' not in self.tokens:
+            print("❌ Skipping - No super admin token available")
+            return False
+        
+        # Test small base64 PNG data (1x1 pixel transparent PNG)
+        test_image_data = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        
+        # Upload profile image
+        success, response = self.run_test(
+            "Upload Profile Image",
+            "PUT",
+            "profile/update",
+            200,
+            data={"profile_image": test_image_data},
+            token=self.tokens.get('super_admin'),
+            description="Upload PNG profile image"
+        )
+        
+        if success:
+            print(f"   Profile image uploaded successfully")
+            
+            # Verify image is returned in user profile
+            success_me, me_response = self.run_test(
+                "Get Profile with Image",
+                "GET",
+                "auth/me",
+                200,
+                token=self.tokens.get('super_admin'),
+                description="Verify profile image is returned"
+            )
+            
+            if success_me and me_response.get('profile_image'):
+                print(f"   Profile image verified in user data")
+            else:
+                print(f"   ⚠️ Profile image not found in user data")
+            
+            # Remove profile image
+            success_remove, _ = self.run_test(
+                "Remove Profile Image",
+                "PUT",
+                "profile/update",
+                200,
+                data={"profile_image": None},
+                token=self.tokens.get('super_admin'),
+                description="Remove profile image"
+            )
+            
+            if success_remove:
+                print(f"   Profile image removed successfully")
+            
+            return success and success_me and success_remove
+        
+        return False
+
+    def test_backup_apis(self):
+        """Test backup and restore APIs"""
+        print("\n💾 Testing Backup & Restore APIs...")
+        
+        if 'super_admin' not in self.tokens:
+            print("❌ Skipping - No super admin token available")
+            return False
+        
+        # Test full database backup
+        success_full, backup_data = self.run_test(
+            "Full Database Backup",
+            "GET",
+            "backup/full",
+            200,
+            token=self.tokens.get('super_admin'),
+            description="Create full database backup"
+        )
+        
+        if success_full:
+            print(f"   Backup created successfully")
+            collections = backup_data.get('collections', {})
+            print(f"   Collections in backup: {list(collections.keys())}")
+            
+            # Verify required collections exist
+            required_collections = ['users', 'tenants', 'm3u_playlists']
+            for collection in required_collections:
+                if collection in collections:
+                    count = len(collections[collection])
+                    print(f"   - {collection}: {count} records")
+                else:
+                    print(f"   - {collection}: Missing!")
+            
+            # Test tenant-specific backup if we have a tenant
+            if 'tenant' in self.test_data:
+                tenant_id = self.test_data['tenant']['id']
+                success_tenant, tenant_backup = self.run_test(
+                    "Tenant Backup",
+                    "GET",
+                    f"backup/tenant/{tenant_id}",
+                    200,
+                    token=self.tokens.get('super_admin'),
+                    description=f"Create backup for tenant {tenant_id}"
+                )
+                
+                if success_tenant:
+                    print(f"   Tenant backup created successfully")
+                    tenant_data = tenant_backup.get('data', {})
+                    print(f"   Tenant data sections: {list(tenant_data.keys())}")
+                    return success_full and success_tenant
+            
+            return success_full
+        
+        return False
+
+    def test_restore_api_endpoints(self):
+        """Test restore API endpoints exist (without actually restoring)"""
+        print("\n🔄 Testing Restore API Endpoints...")
+        
+        if 'super_admin' not in self.tokens:
+            print("❌ Skipping - No super admin token available")
+            return False
+        
+        # Test full restore endpoint with invalid data (should return 400)
+        success_full, _ = self.run_test(
+            "Full Restore Endpoint",
+            "POST",
+            "restore/full",
+            400,  # Expecting 400 for invalid data
+            data={"invalid": "data"},
+            token=self.tokens.get('super_admin'),
+            description="Test full restore endpoint exists (with invalid data)"
+        )
+        
+        # Test tenant restore endpoint with invalid data (should return 400)
+        success_tenant, _ = self.run_test(
+            "Tenant Restore Endpoint",
+            "POST",
+            "restore/tenant",
+            400,  # Expecting 400 for invalid data
+            data={"invalid": "data"},
+            token=self.tokens.get('super_admin'),
+            description="Test tenant restore endpoint exists (with invalid data)"
+        )
+        
+        if success_full and success_tenant:
+            print(f"   Both restore endpoints exist and handle invalid data correctly")
+            return True
+        
+        return False
+
     def test_delete_operations(self):
         """Test delete operations"""
         print("\n🗑️ Testing Delete Operations...")
