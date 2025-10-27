@@ -101,3 +101,120 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: |
+  User requested several enhancements to the M3U management panel:
+  1. Use FFmpeg to probe streams and display detailed technical information (codec, resolution, bitrate, format, etc.)
+  2. Indicate if stream is down/offline using FFmpeg probe
+  3. Fix the HLS web player that currently shows black screen and doesn't play streams
+  4. Add user profile image upload feature (PNG only, 2MB max, stored in MongoDB)
+  5. Add backup & restore functionality for super admins (full database and per-tenant backups)
+
+backend:
+  - task: "FFmpeg stream probing endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added async probe_stream_ffmpeg() function using subprocess to call ffprobe. Extracts format, duration, bitrate, video (codec, resolution, fps), audio (codec, sample rate, channels). Added /api/channels/probe-ffmpeg endpoint. Installed ffmpeg system package."
+  
+  - task: "Profile image upload API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added profile_image field to User model (base64 PNG). Updated UserUpdate model. Added /api/profile/update endpoint with PNG validation and 2MB size limit."
+  
+  - task: "Backup & Restore API"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added 4 new endpoints: /api/backup/full (export all collections), /api/backup/tenant/{id} (export single tenant), /api/restore/full (restore full DB), /api/restore/tenant (restore single tenant). All super admin only."
+
+frontend:
+  - task: "FFmpeg probe display with detailed modal"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Channels.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated Channels.js to call /api/channels/probe-ffmpeg. Added inline status display with format, resolution, bitrate, video codec. Added 'View Full Details' button that opens a modal showing all FFmpeg probe data including audio info, fps, duration, and errors."
+  
+  - task: "Profile image upload UI"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Profile.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Added profile image upload section in Profile page with PNG validation, 2MB size limit, base64 conversion. Shows current image in circular avatar. Added remove image button. Profile image displayed in sidebar navigation."
+  
+  - task: "Backup & Restore page"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/BackupRestore.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created new BackupRestore.js page for super admins only. Features: Download full DB backup or tenant-specific backup as JSON. Upload and restore from backup files with confirmation warnings. Added route to App.js and link in Layout navigation."
+  
+  - task: "HLS web player fixes"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/pages/Channels.js"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported HLS player opens stream URL in browser but doesn't play in embedded player (black screen). This is a persistent issue from previous work."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 0
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "FFmpeg stream probing endpoint"
+    - "Profile image upload API"
+    - "Backup & Restore API"
+    - "FFmpeg probe display with detailed modal"
+    - "Profile image upload UI"
+    - "Backup & Restore page"
+  stuck_tasks:
+    - "HLS web player fixes"
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented all 4 features: (1) FFmpeg stream probing with detailed metadata extraction, (2) Profile image upload with PNG validation, (3) Backup & Restore for full DB and per-tenant, (4) Updated UI for all features. Backend needs testing to verify FFmpeg integration, profile image storage, and backup/restore functionality. Frontend needs testing to verify probe display, image upload, and backup page. HLS player issue remains unresolved."
