@@ -20,6 +20,9 @@ export default function Channels({ user, onLogout }) {
   const [loading, setLoading] = useState(false);
   const [probingChannels, setProbingChannels] = useState({});
   const [channelStatus, setChannelStatus] = useState({});
+  const [ffmpegProbeData, setFfmpegProbeData] = useState({});
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [currentDetails, setCurrentDetails] = useState(null);
   const [playerOpen, setPlayerOpen] = useState(false);
   const [currentStream, setCurrentStream] = useState(null);
   const [selectedChannels, setSelectedChannels] = useState([]);
