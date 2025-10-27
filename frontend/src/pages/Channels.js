@@ -568,7 +568,22 @@ export default function Channels({ user, onLogout }) {
         )}
 
         {/* Video Player Dialog */}
-        <Dialog open={playerOpen} onOpenChange={setPlayerOpen}>
+        <Dialog open={playerOpen} onOpenChange={(open) => {
+          setPlayerOpen(open);
+          if (!open) {
+            // Clean up when closing
+            setPlayerError(null);
+            setPlayerReady(false);
+            if (hlsRef.current) {
+              hlsRef.current.destroy();
+              hlsRef.current = null;
+            }
+            if (videoRef.current) {
+              videoRef.current.pause();
+              videoRef.current.src = '';
+            }
+          }
+        }}>
           <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>{currentStream?.name}</DialogTitle>
