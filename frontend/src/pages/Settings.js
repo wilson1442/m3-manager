@@ -71,6 +71,7 @@ export default function Settings({ user, onLogout }) {
     loadTenants();
     loadSchedules();
     loadBackupFiles();
+    loadSystemSettings();
   }, []);
 
   const loadTenants = async () => {
