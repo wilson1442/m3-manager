@@ -117,25 +117,138 @@ def parse_m3u_content(content: str) -> List[dict]:
     return channels
 
 async def probe_stream(url: str) -> dict:
-    """Check if a stream is online by making a HEAD request"""
+    """Check if a stream is online and extract metadata"""
     result = {
         "url": url,
         "online": False,
         "response_time": None,
-        "error": None
+        "error": None,
+        "bitrate": None,
+        "resolution": None,
+        "audio_codec": None,
+        "video_codec": None,
+        "stream_type": None,
+        "variants": []
     }
     
     try:
         start_time = datetime.now()
         async with aiohttp.ClientSession() as session:
-            async with session.head(url, timeout=aiohttp.ClientTimeout(total=10), allow_redirects=True) as response:
+            # First, try to fetch the stream
+            async with session.get(url, timeout=aiohttp.ClientTimeout(total=10), allow_redirects=True) as response:
                 end_time = datetime.now()
                 result["response_time"] = (end_time - start_time).total_seconds()
-                result["online"] = response.status in [200, 206, 302, 301]
+                
+                if response.status in [200, 206, 302, 301]:
+                    result["online"] = True
+                    
+                    # Check if it's an M3U8/HLS stream
+                    content_type = response.headers.get('Content-Type', '')
+                    if 'mpegurl' in content_type or 'x-mpegURL' in content_type or url.endswith('.m3u8') or url.endswith('.m3u'):
+                        result["stream_type"] = "HLS"
+                        
+                        # Parse M3U8 manifest
+                        try:
+                            manifest_content = await response.text()
+                            result = parse_m3u8_manifest(manifest_content, result)
+                        except Exception as e:
+                            logger.error(f"Error parsing M3U8 manifest: {str(e)}")
+                    
+                    elif 'video' in content_type or 'audio' in content_type:
+                        result["stream_type"] = content_type
+                        
+                        # Try to get content length for bitrate estimation
+                        content_length = response.headers.get('Content-Length')
+                        if content_length:
+                            size_mb = int(content_length) / (1024 * 1024)
+                            result["bitrate"] = f"~{size_mb:.1f} MB total"
+                    
+                else:
+                    result["error"] = f"HTTP {response.status}"
+                    
     except asyncio.TimeoutError:
         result["error"] = "Timeout"
     except Exception as e:
         result["error"] = str(e)
+    
+    return result
+
+def parse_m3u8_manifest(content: str, result: dict) -> dict:
+    """Parse M3U8 manifest to extract stream information"""
+    lines = content.strip().split('\n')
+    
+    variants = []
+    current_variant = {}
+    
+    for line in lines:
+        line = line.strip()
+        
+        # Parse bandwidth and resolution from EXT-X-STREAM-INF
+        if line.startswith('#EXT-X-STREAM-INF:'):
+            current_variant = {}
+            
+            # Extract BANDWIDTH
+            if 'BANDWIDTH=' in line:
+                bandwidth_start = line.index('BANDWIDTH=') + 10
+                bandwidth_end = line.find(',', bandwidth_start)
+                if bandwidth_end == -1:
+                    bandwidth_end = len(line)
+                bandwidth = line[bandwidth_start:bandwidth_end]
+                try:
+                    bandwidth_kbps = int(bandwidth) / 1000
+                    current_variant['bitrate'] = f"{bandwidth_kbps:.0f} kbps"
+                except:
+                    pass
+            
+            # Extract RESOLUTION
+            if 'RESOLUTION=' in line:
+                resolution_start = line.index('RESOLUTION=') + 11
+                resolution_end = line.find(',', resolution_start)
+                if resolution_end == -1:
+                    resolution_end = line.find(' ', resolution_start)
+                if resolution_end == -1:
+                    resolution_end = len(line)
+                current_variant['resolution'] = line[resolution_start:resolution_end]
+            
+            # Extract CODECS
+            if 'CODECS=' in line:
+                codecs_start = line.index('CODECS="') + 8
+                codecs_end = line.index('"', codecs_start)
+                codecs = line[codecs_start:codecs_end]
+                
+                # Parse codecs (usually format: "avc1.xxxxx,mp4a.xx.x")
+                codec_parts = codecs.split(',')
+                for codec in codec_parts:
+                    codec = codec.strip()
+                    if codec.startswith('avc') or codec.startswith('hvc') or codec.startswith('vp'):
+                        current_variant['video_codec'] = codec
+                    elif codec.startswith('mp4a') or codec.startswith('ac-3') or codec.startswith('ec-3'):
+                        current_variant['audio_codec'] = codec
+        
+        elif line and not line.startswith('#') and current_variant:
+            # This is a variant URL
+            variants.append(current_variant)
+            current_variant = {}
+    
+    if variants:
+        result["variants"] = variants
+        
+        # Set the highest quality variant as the main info
+        # Sort by bitrate
+        variants_with_bitrate = [v for v in variants if 'bitrate' in v]
+        if variants_with_bitrate:
+            highest_quality = max(variants_with_bitrate, 
+                                key=lambda x: int(x['bitrate'].replace(' kbps', '')))
+            result["bitrate"] = highest_quality.get('bitrate')
+            result["resolution"] = highest_quality.get('resolution')
+            result["video_codec"] = highest_quality.get('video_codec')
+            result["audio_codec"] = highest_quality.get('audio_codec')
+    
+    # Also check for single stream info
+    if not variants:
+        for line in lines:
+            if line.startswith('#EXT-X-TARGETDURATION:'):
+                result["stream_type"] = "HLS (Single)"
     
     return result
 
