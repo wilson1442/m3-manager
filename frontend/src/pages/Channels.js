@@ -40,43 +40,57 @@ export default function Channels({ user, onLogout }) {
       const video = videoRef.current;
       const streamUrl = currentStream.url;
 
+      console.log("Loading stream:", streamUrl);
+
       // Clean up previous HLS instance
       if (hlsRef.current) {
         hlsRef.current.destroy();
+        hlsRef.current = null;
       }
+
+      // Reset video
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
 
       // Check if it's an HLS stream
       if (streamUrl.includes('.m3u8') || streamUrl.includes('.m3u')) {
         if (Hls.isSupported()) {
+          console.log("Using HLS.js for playback");
           const hls = new Hls({
             enableWorker: true,
             lowLatencyMode: true,
             backBufferLength: 90,
+            debug: false,
           });
 
           hls.loadSource(streamUrl);
           hls.attachMedia(video);
 
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log("Manifest parsed, starting playback");
             video.play().catch(err => {
               console.error("Playback failed:", err);
-              toast.error("Failed to play stream. Stream may be offline.");
+              toast.error("Failed to play stream. Stream may be offline or blocked by CORS.");
             });
           });
 
           hls.on(Hls.Events.ERROR, (event, data) => {
+            console.error("HLS Error:", data);
             if (data.fatal) {
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
-                  toast.error("Network error - trying to recover");
+                  console.log("Network error - trying to recover");
+                  toast.error("Network error - stream may be offline");
                   hls.startLoad();
                   break;
                 case Hls.ErrorTypes.MEDIA_ERROR:
+                  console.log("Media error - trying to recover");
                   toast.error("Media error - trying to recover");
                   hls.recoverMediaError();
                   break;
                 default:
-                  toast.error("Fatal error - cannot play stream");
+                  toast.error("Cannot play stream: " + data.details);
                   hls.destroy();
                   break;
               }
@@ -86,6 +100,7 @@ export default function Channels({ user, onLogout }) {
           hlsRef.current = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           // For Safari which has native HLS support
+          console.log("Using native HLS support");
           video.src = streamUrl;
           video.addEventListener('loadedmetadata', () => {
             video.play().catch(err => {
@@ -98,10 +113,11 @@ export default function Channels({ user, onLogout }) {
         }
       } else {
         // For non-HLS streams (mp4, etc)
+        console.log("Using direct video playback");
         video.src = streamUrl;
         video.play().catch(err => {
           console.error("Playback failed:", err);
-          toast.error("Failed to play stream");
+          toast.error("Failed to play stream. Stream may be offline.");
         });
       }
     }
@@ -109,7 +125,6 @@ export default function Channels({ user, onLogout }) {
     return () => {
       if (videoRef.current) {
         videoRef.current.pause();
-        videoRef.current.src = "";
       }
     };
   }, [playerOpen, currentStream]);
