@@ -58,6 +58,20 @@ export default function Layout({ user, onLogout, children, currentPage }) {
         path: "/channels",
         key: "channels",
         roles: ["tenant_owner"],
+      },
+      {
+        name: "Categories",
+        icon: FolderTree,
+        path: "/categories",
+        key: "categories",
+        roles: ["tenant_owner"],
+      },
+      {
+        name: "Events",
+        icon: Calendar,
+        path: "/events",
+        key: "events",
+        roles: ["tenant_owner"],
       }
     );
   }
@@ -76,6 +90,13 @@ export default function Layout({ user, onLogout, children, currentPage }) {
         icon: Search,
         path: "/channels",
         key: "channels",
+        roles: ["user"],
+      },
+      {
+        name: "Events",
+        icon: Calendar,
+        path: "/events",
+        key: "events",
         roles: ["user"],
       }
     );
