@@ -34,6 +34,16 @@ export default function Settings({ user, onLogout }) {
     retention_days: 7
   });
   
+  // System updates
+  const [systemSettings, setSystemSettings] = useState({
+    production_repo_url: "",
+    beta_repo_url: "",
+    current_branch: "production",
+    last_update: null
+  });
+  const [updating, setUpdating] = useState(false);
+  const [deploying, setDeploying] = useState(false);
+  
   const token = localStorage.getItem("token");
 
   // Check if user is super admin
