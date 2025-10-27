@@ -189,7 +189,7 @@ export default function BackupRestore({ user, onLogout }) {
     }
   };
 
-  useState(() => {
+  useEffect(() => {
     loadTenants();
   }, []);
 
