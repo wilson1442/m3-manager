@@ -563,6 +563,19 @@ class BackupScheduleUpdate(BaseModel):
     retention_days: Optional[int] = None
     enabled: Optional[bool] = None
 
+class SystemSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    production_repo_url: str = ""
+    beta_repo_url: str = ""
+    current_branch: str = "production"
+    last_update: Optional[datetime] = None
+    updated_by: Optional[str] = None
+
+class SystemSettingsUpdate(BaseModel):
+    production_repo_url: Optional[str] = None
+    beta_repo_url: Optional[str] = None
+
 # Backup directory setup
 BACKUP_DIR = ROOT_DIR / "backups"
 BACKUP_DIR.mkdir(exist_ok=True)
