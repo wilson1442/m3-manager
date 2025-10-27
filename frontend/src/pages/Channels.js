@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Search, Copy, Play, Radio, Loader2 } from "lucide-react";
+import { Search, Copy, Play, Radio, Loader2, Download } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
