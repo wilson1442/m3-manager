@@ -114,7 +114,7 @@ export default function M3UManagement({ user, onLogout }) {
       toast.success("Playlist updated successfully!");
       setIsEditDialogOpen(false);
       setSelectedPlaylist(null);
-      setFormData({ name: "", url: "", content: "" });
+      setFormData({ name: "", url: "", content: "", player_api: "" });
       fetchPlaylists();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to update playlist");
