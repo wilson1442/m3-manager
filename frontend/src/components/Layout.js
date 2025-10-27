@@ -173,7 +173,10 @@ export default function Layout({ user, onLogout, children, currentPage }) {
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3">
+        <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
+          <div className="px-3 py-2 text-center">
+            <p className="text-xs text-muted-foreground">Version 1.0.0</p>
+          </div>
           <Button
             data-testid="logout-btn"
             variant="outline"
