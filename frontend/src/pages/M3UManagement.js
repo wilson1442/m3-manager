@@ -75,6 +75,21 @@ export default function M3UManagement({ user, onLogout }) {
     }
   };
 
+  const handleRefreshApi = async (playlistId) => {
+    setRefreshingApi({ ...refreshingApi, [playlistId]: true });
+    try {
+      await axios.post(`${API}/m3u/${playlistId}/refresh-api`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Player API data refreshed!");
+      fetchPlaylists();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to refresh API data");
+    } finally {
+      setRefreshingApi({ ...refreshingApi, [playlistId]: false });
+    }
+  };
+
   const handleAdd = async (e) => {
     e.preventDefault();
     try {
