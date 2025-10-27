@@ -604,6 +604,10 @@ def main():
         ("Get Playlists (User)", tester.test_get_m3u_playlists_as_user),
         ("Update Playlist", tester.test_update_m3u_playlist),
         ("Theme Update", tester.test_theme_update),
+        ("FFmpeg Stream Probing", tester.test_ffmpeg_stream_probing),
+        ("Profile Image Upload", tester.test_profile_image_upload),
+        ("Backup APIs", tester.test_backup_apis),
+        ("Restore API Endpoints", tester.test_restore_api_endpoints),
         ("Authorization Tests", tester.test_unauthorized_access),
         ("Delete Operations", tester.test_delete_operations),
     ]
