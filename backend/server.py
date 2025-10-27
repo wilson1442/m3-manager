@@ -252,6 +252,38 @@ def parse_m3u8_manifest(content: str, result: dict) -> dict:
     
     return result
 
+async def fetch_player_api_data(player_api_url: str) -> dict:
+    """Fetch data from player API URL"""
+    result = {
+        "max_connections": None,
+        "active_connections": None,
+        "expiration_date": None,
+        "error": None
+    }
+    
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(player_api_url, timeout=aiohttp.ClientTimeout(total=10)) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    
+                    # Extract relevant fields - adjust based on actual API response
+                    result["max_connections"] = data.get("max_connections") or data.get("maxConnections") or data.get("max_cons")
+                    result["active_connections"] = data.get("active_connections") or data.get("activeConnections") or data.get("active_cons")
+                    result["expiration_date"] = data.get("exp_date") or data.get("expiration_date") or data.get("expires")
+                    
+                    # If expiration is a timestamp, convert it
+                    if result["expiration_date"] and isinstance(result["expiration_date"], (int, float)):
+                        exp_dt = datetime.fromtimestamp(result["expiration_date"], tz=timezone.utc)
+                        result["expiration_date"] = exp_dt.isoformat()
+                else:
+                    result["error"] = f"HTTP {response.status}"
+    except Exception as e:
+        result["error"] = str(e)
+        logger.error(f"Error fetching player API data: {str(e)}")
+    
+    return result
+
 # Models
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
