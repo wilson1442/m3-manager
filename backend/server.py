@@ -1711,6 +1711,205 @@ async def download_backup_file(filename: str, current_user: User = Depends(get_c
     with open(backup_file, 'r') as f:
         return json.load(f)
 
+# System Settings and Updates
+@api_router.get("/system/settings", response_model=SystemSettings)
+async def get_system_settings(current_user: User = Depends(get_current_user)):
+    """Get system settings (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can view system settings")
+    
+    settings = await db.system_settings.find_one({}, {"_id": 0})
+    if not settings:
+        # Create default settings
+        settings = SystemSettings()
+        settings_doc = settings.model_dump()
+        await db.system_settings.insert_one(settings_doc)
+    else:
+        if settings.get('last_update') and isinstance(settings['last_update'], str):
+            settings['last_update'] = datetime.fromisoformat(settings['last_update'])
+        settings = SystemSettings(**settings)
+    
+    return settings
+
+@api_router.put("/system/settings", response_model=SystemSettings)
+async def update_system_settings(settings_data: SystemSettingsUpdate, current_user: User = Depends(get_current_user)):
+    """Update system settings (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can update system settings")
+    
+    update_fields = {}
+    if settings_data.production_repo_url is not None:
+        update_fields['production_repo_url'] = settings_data.production_repo_url
+    if settings_data.beta_repo_url is not None:
+        update_fields['beta_repo_url'] = settings_data.beta_repo_url
+    
+    if update_fields:
+        update_fields['updated_by'] = current_user.id
+        await db.system_settings.update_one({}, {"$set": update_fields}, upsert=True)
+    
+    settings = await db.system_settings.find_one({}, {"_id": 0})
+    if settings.get('last_update') and isinstance(settings['last_update'], str):
+        settings['last_update'] = datetime.fromisoformat(settings['last_update'])
+    
+    return SystemSettings(**settings)
+
+@api_router.post("/system/update")
+async def pull_system_update(branch: str, current_user: User = Depends(get_current_user)):
+    """Pull updates from GitHub repository (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can update the system")
+    
+    if branch not in ["production", "beta"]:
+        raise HTTPException(status_code=400, detail="Branch must be 'production' or 'beta'")
+    
+    # Get system settings
+    settings = await db.system_settings.find_one({}, {"_id": 0})
+    if not settings:
+        raise HTTPException(status_code=400, detail="System settings not configured. Please set repository URLs first.")
+    
+    repo_url = settings.get('production_repo_url') if branch == "production" else settings.get('beta_repo_url')
+    if not repo_url:
+        raise HTTPException(status_code=400, detail=f"Repository URL for {branch} branch not configured")
+    
+    try:
+        install_dir = ROOT_DIR.parent  # /opt/m3u-panel or wherever installed
+        
+        # Create a backup before updating
+        backup_dir = install_dir / "backup_before_update"
+        backup_dir.mkdir(exist_ok=True)
+        
+        import shutil
+        from datetime import datetime
+        
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        backup_path = backup_dir / f"backup_{timestamp}"
+        
+        # Backup current installation
+        logger.info(f"Creating backup at {backup_path}")
+        shutil.copytree(install_dir / "backend", backup_path / "backend", ignore=shutil.ignore_patterns('venv', '__pycache__', '*.pyc', 'backups'))
+        shutil.copytree(install_dir / "frontend", backup_path / "frontend", ignore=shutil.ignore_patterns('node_modules', 'build'))
+        
+        # Pull updates using git
+        logger.info(f"Pulling updates from {repo_url}")
+        
+        # Check if .git exists
+        git_dir = install_dir / ".git"
+        if not git_dir.exists():
+            # Initialize git repo
+            result = subprocess.run(['git', 'init'], cwd=install_dir, capture_output=True, text=True)
+            if result.returncode != 0:
+                raise Exception(f"Git init failed: {result.stderr}")
+            
+            # Add remote
+            result = subprocess.run(['git', 'remote', 'add', 'origin', repo_url], cwd=install_dir, capture_output=True, text=True)
+            if result.returncode != 0:
+                # Remote might already exist
+                subprocess.run(['git', 'remote', 'set-url', 'origin', repo_url], cwd=install_dir, capture_output=True, text=True)
+        
+        # Fetch updates
+        result = subprocess.run(['git', 'fetch', 'origin'], cwd=install_dir, capture_output=True, text=True, timeout=60)
+        if result.returncode != 0:
+            raise Exception(f"Git fetch failed: {result.stderr}")
+        
+        # Determine which branch to pull
+        git_branch = "main" if branch == "production" else "beta"
+        
+        # Reset to remote branch
+        result = subprocess.run(['git', 'reset', '--hard', f'origin/{git_branch}'], cwd=install_dir, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise Exception(f"Git reset failed: {result.stderr}")
+        
+        # Update system settings
+        await db.system_settings.update_one(
+            {},
+            {
+                "$set": {
+                    "current_branch": branch,
+                    "last_update": datetime.now(timezone.utc),
+                    "updated_by": current_user.id
+                }
+            },
+            upsert=True
+        )
+        
+        logger.info("Update pulled successfully")
+        
+        return {
+            "message": "Update pulled successfully. Please run deployment script to apply changes.",
+            "branch": branch,
+            "backup_location": str(backup_path)
+        }
+        
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Git operation timed out")
+    except Exception as e:
+        logger.error(f"Error pulling updates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to pull updates: {str(e)}")
+
+@api_router.post("/system/deploy")
+async def deploy_system_update(current_user: User = Depends(get_current_user)):
+    """Deploy pulled updates (rebuilds frontend and restarts services) (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can deploy updates")
+    
+    try:
+        install_dir = ROOT_DIR.parent
+        
+        # Install backend dependencies
+        logger.info("Installing backend dependencies...")
+        venv_python = install_dir / "backend" / "venv" / "bin" / "python"
+        venv_pip = install_dir / "backend" / "venv" / "bin" / "pip"
+        
+        if venv_pip.exists():
+            result = subprocess.run(
+                [str(venv_pip), 'install', '-r', 'requirements.txt'],
+                cwd=install_dir / "backend",
+                capture_output=True,
+                text=True,
+                timeout=300
+            )
+            if result.returncode != 0:
+                logger.warning(f"Backend dependencies install had warnings: {result.stderr}")
+        
+        # Install frontend dependencies and build
+        logger.info("Installing frontend dependencies...")
+        result = subprocess.run(
+            ['yarn', 'install'],
+            cwd=install_dir / "frontend",
+            capture_output=True,
+            text=True,
+            timeout=300
+        )
+        if result.returncode != 0:
+            raise Exception(f"Yarn install failed: {result.stderr}")
+        
+        logger.info("Building frontend...")
+        result = subprocess.run(
+            ['yarn', 'build'],
+            cwd=install_dir / "frontend",
+            capture_output=True,
+            text=True,
+            timeout=600
+        )
+        if result.returncode != 0:
+            raise Exception(f"Yarn build failed: {result.stderr}")
+        
+        # Restart services
+        logger.info("Restarting services...")
+        subprocess.run(['systemctl', 'restart', 'm3u-backend'], check=False)
+        subprocess.run(['systemctl', 'restart', 'm3u-frontend'], check=False)
+        
+        return {
+            "message": "Deployment completed successfully. Services are restarting.",
+            "note": "Backend and frontend services are restarting. Please refresh your browser in a few seconds."
+        }
+        
+    except subprocess.TimeoutExpired:
+        raise HTTPException(status_code=500, detail="Deployment operation timed out")
+    except Exception as e:
+        logger.error(f"Error deploying updates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to deploy updates: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
