@@ -333,6 +333,17 @@ class StreamProbeResult(BaseModel):
     stream_type: Optional[str] = None
     variants: Optional[List[dict]] = None
 
+class MonitoredCategory(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tenant_id: str
+    category: str
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class MonitoredCategoryCreate(BaseModel):
+    category: str
+
 class ThemeUpdate(BaseModel):
     theme: str
 
