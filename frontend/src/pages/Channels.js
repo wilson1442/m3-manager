@@ -574,16 +574,83 @@ export default function Channels({ user, onLogout }) {
                 {currentStream?.group && <Badge variant="secondary">{currentStream.group}</Badge>}
               </DialogDescription>
             </DialogHeader>
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+            
+            {/* Status indicators */}
+            {playerError && (
+              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800">
+                <p className="text-sm text-red-600 dark:text-red-400">{playerError}</p>
+              </div>
+            )}
+            
+            {!playerReady && !playerError && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
+                <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading stream...
+                </p>
+              </div>
+            )}
+            
+            <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
               <video
                 ref={videoRef}
                 controls
                 className="w-full h-full"
                 data-testid="video-player"
                 playsInline
-                crossOrigin="anonymous"
+                autoPlay
+                muted={false}
               />
+              {!playerReady && !playerError && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-12 w-12 text-white animate-spin" />
+                </div>
+              )}
             </div>
+            
+            {/* Manual play button for autoplay issues */}
+            {playerReady && (
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      videoRef.current.play().catch(err => {
+                        toast.error("Failed to play: " + err.message);
+                      });
+                    }
+                  }}
+                >
+                  <Play className="h-4 w-4 mr-1" />
+                  Play
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      videoRef.current.pause();
+                    }
+                  }}
+                >
+                  Pause
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = 0;
+                      videoRef.current.play();
+                    }
+                  }}
+                >
+                  Restart
+                </Button>
+              </div>
+            )}
+            
             <div className="text-sm text-muted-foreground space-y-1">
               <p><strong>Stream URL:</strong> {currentStream?.url}</p>
               <p><strong>Playlist:</strong> {currentStream?.playlist_name}</p>
@@ -626,13 +693,13 @@ export default function Channels({ user, onLogout }) {
                 </Button>
               </div>
               <p className="text-xs mt-2">
-                <strong>Note:</strong> If the stream doesn't play in the browser, it may be:
+                <strong>Troubleshooting:</strong>
               </p>
               <ul className="text-xs list-disc list-inside space-y-1">
-                <li>Offline or unavailable</li>
-                <li>Requires authentication</li>
-                <li>Blocked by CORS policy</li>
-                <li>Try opening in a new tab or use a dedicated IPTV player (VLC, Kodi, etc.)</li>
+                <li>If stream doesn't auto-play, click the "Play" button above</li>
+                <li>Some streams may be offline or require authentication</li>
+                <li>CORS policy may block some streams</li>
+                <li>Try "Open in New Tab" or use VLC/Kodi for better compatibility</li>
               </ul>
             </div>
           </DialogContent>
