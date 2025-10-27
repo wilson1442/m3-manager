@@ -958,6 +958,12 @@ async def probe_channel(url: str, current_user: User = Depends(get_current_user)
     result = await probe_stream(url)
     return StreamProbeResult(**result)
 
+@api_router.post("/channels/probe-ffmpeg", response_model=FFmpegProbeResult)
+async def probe_channel_ffmpeg(url: str, current_user: User = Depends(get_current_user)):
+    """Probe a stream URL using FFmpeg/ffprobe for detailed information"""
+    result = await probe_stream_ffmpeg(url)
+    return FFmpegProbeResult(**result)
+
 @api_router.get("/categories")
 async def get_categories(current_user: User = Depends(get_current_user)):
     """Get all unique categories from playlists in user's tenant"""
