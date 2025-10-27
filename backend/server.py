@@ -540,6 +540,33 @@ class MonitoredCategoryCreate(BaseModel):
 class ThemeUpdate(BaseModel):
     theme: str
 
+class BackupSchedule(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    schedule_type: str  # "full" or "tenant"
+    tenant_id: Optional[str] = None
+    frequency: str  # "daily" or "weekly"
+    retention_days: int
+    enabled: bool = True
+    last_run: Optional[datetime] = None
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class BackupScheduleCreate(BaseModel):
+    schedule_type: str
+    tenant_id: Optional[str] = None
+    frequency: str
+    retention_days: int
+
+class BackupScheduleUpdate(BaseModel):
+    frequency: Optional[str] = None
+    retention_days: Optional[int] = None
+    enabled: Optional[bool] = None
+
+# Backup directory setup
+BACKUP_DIR = ROOT_DIR / "backups"
+BACKUP_DIR.mkdir(exist_ok=True)
+
 # Helper functions
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
