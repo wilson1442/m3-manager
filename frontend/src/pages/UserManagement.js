@@ -79,18 +79,71 @@ export default function UserManagement({ user, onLogout }) {
   const handleAdd = async (e) => {
     e.preventDefault();
     
-    if (isSuperAdmin && !formData.tenant_id) {
-      toast.error("Please select a tenant");
+    if (isSuperAdmin && !formData.tenant_id && !formData.createNewTenant) {
+      toast.error("Please select a tenant or create a new one");
+      return;
+    }
+    
+    if (formData.createNewTenant && !formData.newTenantName.trim()) {
+      toast.error("Please enter a tenant name");
       return;
     }
 
     try {
-      await axios.post(`${API}/users`, formData, {
+      let tenantId = formData.tenant_id;
+      
+      // If creating new tenant, create it first
+      if (formData.createNewTenant) {
+        const tenantResponse = await axios.post(
+          `${API}/tenants`,
+          {
+            name: formData.newTenantName,
+            owner_username: formData.username,
+            owner_password: formData.password
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        
+        toast.success("Tenant and user created successfully!");
+        setIsAddDialogOpen(false);
+        setFormData({ 
+          username: "", 
+          password: "", 
+          name: "", 
+          tenant_id: "", 
+          role: "user",
+          createNewTenant: false,
+          newTenantName: ""
+        });
+        fetchUsers();
+        if (isSuperAdmin) fetchTenants();
+        return;
+      }
+      
+      // Regular user creation
+      await axios.post(`${API}/users`, {
+        username: formData.username,
+        password: formData.password,
+        name: formData.name,
+        tenant_id: formData.tenant_id,
+        role: formData.role
+      }, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      
       toast.success("User created successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ username: "", password: "", name: "", tenant_id: "", role: "user" });
+      setFormData({ 
+        username: "", 
+        password: "", 
+        name: "", 
+        tenant_id: "", 
+        role: "user",
+        createNewTenant: false,
+        newTenantName: ""
+      });
       fetchUsers();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to create user");
