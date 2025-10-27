@@ -290,6 +290,47 @@ export default function M3UManagement({ user, onLogout }) {
                       <p className="text-sm text-muted-foreground line-clamp-3">{playlist.content}</p>
                     </div>
                   )}
+                  
+                  {playlist.player_api && (
+                    <div className="mb-4 p-3 bg-muted/50 rounded-md space-y-2">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">Player API Status</h4>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRefreshApi(playlist.id)}
+                          disabled={refreshingApi[playlist.id]}
+                          data-testid={`refresh-api-${playlist.id}`}
+                        >
+                          <RefreshCw className={`h-3 w-3 ${refreshingApi[playlist.id] ? 'animate-spin' : ''}`} />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Max Connections:</span>
+                          <p className="font-medium">{playlist.max_connections ?? 'N/A'}</p>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Active:</span>
+                          <p className="font-medium">{playlist.active_connections ?? 'N/A'}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <span className="text-muted-foreground">Expires:</span>
+                          <p className="font-medium">
+                            {playlist.expiration_date 
+                              ? new Date(playlist.expiration_date).toLocaleString() 
+                              : 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+                      {playlist.api_last_checked && (
+                        <p className="text-xs text-muted-foreground">
+                          Checked: {formatRefreshTime(playlist.api_last_checked)}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  
                   {canManage && (
                     <div className="flex gap-2">
                       <Button
