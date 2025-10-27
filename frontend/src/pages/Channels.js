@@ -48,6 +48,8 @@ export default function Channels({ user, onLogout }) {
       const streamUrl = currentStream.url;
 
       console.log("Loading stream:", streamUrl);
+      setPlayerError(null);
+      setPlayerReady(false);
 
       // Clean up previous HLS instance
       if (hlsRef.current) {
@@ -55,96 +57,173 @@ export default function Channels({ user, onLogout }) {
         hlsRef.current = null;
       }
 
-      // Reset video
+      // Reset video element completely
       video.pause();
       video.removeAttribute('src');
       video.load();
+      
+      // Remove any existing source elements
+      while (video.firstChild) {
+        video.removeChild(video.firstChild);
+      }
 
       // Check if it's an HLS stream
       if (streamUrl.includes('.m3u8') || streamUrl.includes('.m3u')) {
         if (Hls.isSupported()) {
           console.log("Using HLS.js for playback");
+          
           const hls = new Hls({
+            debug: false, // Disable debug in production
             enableWorker: true,
             lowLatencyMode: false,
             backBufferLength: 90,
-            debug: true,
+            maxBufferLength: 30,
+            maxMaxBufferLength: 600,
+            maxBufferSize: 60 * 1000 * 1000,
+            maxBufferHole: 0.5,
+            highBufferWatchdogPeriod: 2,
+            nudgeOffset: 0.1,
+            nudgeMaxRetry: 3,
+            maxFragLookUpTolerance: 0.25,
+            liveSyncDurationCount: 3,
+            liveMaxLatencyDurationCount: Infinity,
+            liveDurationInfinity: false,
+            liveBackBufferLength: Infinity,
+            maxLiveSyncPlaybackRate: 1,
+            manifestLoadingTimeOut: 10000,
+            manifestLoadingMaxRetry: 1,
+            manifestLoadingRetryDelay: 1000,
+            levelLoadingTimeOut: 10000,
+            levelLoadingMaxRetry: 4,
+            levelLoadingRetryDelay: 1000,
+            fragLoadingTimeOut: 20000,
+            fragLoadingMaxRetry: 6,
+            fragLoadingRetryDelay: 1000,
+            startFragPrefetch: false,
+            testBandwidth: true,
+            progressive: false,
+            lowLatencyMode: false,
+            fpsDroppedMonitoringPeriod: 5000,
+            fpsDroppedMonitoringThreshold: 0.2,
+            appendErrorMaxRetry: 3,
             xhrSetup: function(xhr, url) {
-              // Don't set CORS mode - let browser handle it
               xhr.withCredentials = false;
-            },
+              xhr.timeout = 10000;
+            }
           });
 
           hls.loadSource(streamUrl);
           hls.attachMedia(video);
 
           hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
-            console.log("Manifest parsed successfully, levels:", data.levels);
-            toast.success("Stream loaded! Starting playback...");
+            console.log("✅ Manifest parsed successfully");
+            console.log("Available levels:", data.levels);
+            setPlayerReady(true);
+            toast.success("Stream loaded successfully!");
             
-            video.play().then(() => {
-              console.log("Playback started successfully");
-            }).catch(err => {
-              console.error("Playback failed:", err);
-              toast.error("Autoplay blocked. Click the play button on the video.");
-            });
+            // Try to play with a slight delay
+            setTimeout(() => {
+              video.play()
+                .then(() => {
+                  console.log("✅ Playback started successfully");
+                })
+                .catch(err => {
+                  console.warn("Autoplay prevented:", err);
+                  toast.info("Click the play button to start playback");
+                });
+            }, 100);
           });
 
           hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
-            console.log("Level loaded:", data.details);
+            console.log("✅ Level loaded:", data.details);
           });
 
           hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
-            console.log("Fragment loaded successfully");
+            console.log("✅ Fragment loaded");
+          });
+
+          hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+            console.log("✅ Media attached to video element");
           });
 
           hls.on(Hls.Events.ERROR, (event, data) => {
-            console.error("HLS Error:", data);
+            console.error("❌ HLS Error:", data);
             
             if (data.fatal) {
+              const errorMessage = data.details || "Unknown error";
+              setPlayerError(`Stream error: ${errorMessage}`);
+              
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
-                  console.log("Fatal network error, trying to recover");
-                  toast.error("Network error - retrying...");
-                  setTimeout(() => hls.startLoad(), 1000);
+                  console.log("🔄 Fatal network error, trying to recover...");
+                  toast.error("Network error - attempting recovery...");
+                  setTimeout(() => {
+                    hls.startLoad();
+                  }, 1000);
                   break;
+                  
                 case Hls.ErrorTypes.MEDIA_ERROR:
-                  console.log("Fatal media error, trying to recover");
+                  console.log("🔄 Fatal media error, trying to recover...");
                   toast.error("Media error - recovering...");
                   hls.recoverMediaError();
                   break;
+                  
                 default:
-                  console.log("Fatal error, cannot recover");
-                  toast.error("Stream cannot be played: " + (data.details || "Unknown error"));
+                  console.log("💀 Fatal error, cannot recover");
+                  toast.error(`Cannot play stream: ${errorMessage}`);
                   hls.destroy();
                   break;
               }
             } else {
-              console.log("Non-fatal error:", data.details);
+              console.log("⚠️ Non-fatal error:", data.details);
             }
           });
 
           hlsRef.current = hls;
+          
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           // For Safari which has native HLS support
           console.log("Using native HLS support (Safari)");
           video.src = streamUrl;
+          
           video.addEventListener('loadedmetadata', () => {
+            console.log("✅ Metadata loaded (Safari)");
+            setPlayerReady(true);
             video.play().catch(err => {
-              console.error("Playback failed:", err);
-              toast.error("Autoplay blocked. Click play button.");
+              console.warn("Autoplay prevented:", err);
+              toast.info("Click the play button to start playback");
             });
           });
+          
+          video.addEventListener('error', (e) => {
+            console.error("❌ Video error (Safari):", e);
+            setPlayerError("Failed to load stream");
+            toast.error("Failed to load stream");
+          });
+          
         } else {
+          setPlayerError("Browser doesn't support HLS playback");
           toast.error("Your browser doesn't support HLS playback. Try Chrome, Firefox, or Safari.");
         }
       } else {
         // For non-HLS streams (mp4, etc)
         console.log("Using direct video playback");
         video.src = streamUrl;
+        
+        video.addEventListener('loadedmetadata', () => {
+          console.log("✅ Metadata loaded");
+          setPlayerReady(true);
+        });
+        
+        video.addEventListener('error', (e) => {
+          console.error("❌ Video error:", e);
+          setPlayerError("Failed to load stream");
+          toast.error("Failed to load stream");
+        });
+        
         video.play().catch(err => {
-          console.error("Playback failed:", err);
-          toast.error("Failed to play stream. Click play button to try again.");
+          console.warn("Autoplay prevented:", err);
+          toast.info("Click the play button to start playback");
         });
       }
     }
