@@ -22,8 +22,9 @@ export default function M3UManagement({ user, onLogout }) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedPlaylist, setSelectedPlaylist] = useState(null);
-  const [formData, setFormData] = useState({ name: "", url: "", content: "" });
+  const [formData, setFormData] = useState({ name: "", url: "", content: "", player_api: "" });
   const [refreshStatus, setRefreshStatus] = useState(null);
+  const [refreshingApi, setRefreshingApi] = useState({});
 
   const token = localStorage.getItem("token");
 
