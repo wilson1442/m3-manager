@@ -356,6 +356,38 @@ sudo mongorestore --db m3u_panel /backup/mongodb/BACKUP_DATE/m3u_panel
 
 ## Troubleshooting
 
+### MongoDB Service Error
+
+**Error:** `Failed to start m3u-backend.service: Unit mongodb.service not found`
+
+**Solution:**
+```bash
+# Quick fix - update the backend service file
+sudo nano /etc/systemd/system/m3u-backend.service
+
+# Change this line:
+# After=network.target mongodb.service
+# Requires=mongodb.service
+
+# To this:
+After=network.target mongod.service
+Requires=mongod.service
+
+# Save and exit (Ctrl+X, Y, Enter)
+
+# Reload and restart services
+sudo systemctl daemon-reload
+sudo systemctl start mongod
+sudo systemctl start m3u-backend
+sudo systemctl status m3u-backend
+```
+
+Or use the automated fix script:
+```bash
+chmod +x fix-mongodb-service.sh
+sudo ./fix-mongodb-service.sh
+```
+
 ### Services Won't Start
 ```bash
 # Check service status
