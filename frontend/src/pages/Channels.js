@@ -459,6 +459,7 @@ export default function Channels({ user, onLogout }) {
               </Card>
             ))}
           </div>
+        </div>
         )}
 
         {/* Video Player Dialog */}
