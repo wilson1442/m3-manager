@@ -751,6 +751,183 @@ export default function Settings({ user, onLogout }) {
               )}
             </div>
           </TabsContent>
+
+          {/* System Updates Tab */}
+          <TabsContent value="updates" className="space-y-6">
+            <Alert>
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Warning:</strong> System updates will modify your installation. Always create a backup before updating.
+                The system will automatically create a backup before pulling updates.
+              </AlertDescription>
+            </Alert>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GitBranch className="h-5 w-5" />
+                  Repository Configuration
+                </CardTitle>
+                <CardDescription>
+                  Configure GitHub repository URLs for production and beta updates
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="prod-repo">Production Repository URL</Label>
+                  <Input
+                    id="prod-repo"
+                    placeholder="https://github.com/username/repo.git"
+                    value={systemSettings.production_repo_url}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, production_repo_url: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Main branch for stable production releases
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="beta-repo">Beta Repository URL</Label>
+                  <Input
+                    id="beta-repo"
+                    placeholder="https://github.com/username/repo.git"
+                    value={systemSettings.beta_repo_url}
+                    onChange={(e) => setSystemSettings({ ...systemSettings, beta_repo_url: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Beta branch for testing new features
+                  </p>
+                </div>
+
+                <Button onClick={handleUpdateSystemSettings}>
+                  Save Repository URLs
+                </Button>
+
+                {systemSettings.last_update && (
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Current Branch:</strong> {systemSettings.current_branch}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Last Update:</strong> {new Date(systemSettings.last_update).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Pull Updates */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <RefreshCw className="h-5 w-5" />
+                    Pull Updates
+                  </CardTitle>
+                  <CardDescription>
+                    Download latest changes from GitHub
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => handlePullUpdate('production')}
+                      disabled={updating || !systemSettings.production_repo_url}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {updating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <GitBranch className="h-4 w-4 mr-2" />
+                      )}
+                      Pull Production Updates
+                    </Button>
+
+                    <Button
+                      onClick={() => handlePullUpdate('beta')}
+                      disabled={updating || !systemSettings.beta_repo_url}
+                      className="w-full"
+                      variant="outline"
+                    >
+                      {updating ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <GitBranch className="h-4 w-4 mr-2" />
+                      )}
+                      Pull Beta Updates
+                    </Button>
+                  </div>
+
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
+                    <p className="text-blue-600 dark:text-blue-400">
+                      <strong>Note:</strong> Pulling updates only downloads the changes. You must deploy to apply them.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Deploy Updates */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Database className="h-5 w-5" />
+                    Deploy Updates
+                  </CardTitle>
+                  <CardDescription>
+                    Build and restart services with new changes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Deploying will:
+                  </p>
+                  <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                    <li>Install backend dependencies</li>
+                    <li>Build frontend application</li>
+                    <li>Restart backend service</li>
+                    <li>Restart frontend service</li>
+                  </ul>
+
+                  <Button
+                    onClick={handleDeploy}
+                    disabled={deploying}
+                    className="w-full"
+                    variant="default"
+                  >
+                    {deploying ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                    )}
+                    Deploy Changes
+                  </Button>
+
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-md text-sm border border-yellow-200 dark:border-yellow-800">
+                    <p className="text-yellow-600 dark:text-yellow-400">
+                      <strong>⚠️ Warning:</strong> Services will restart. You will be disconnected for ~15 seconds.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Update Process</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ol className="list-decimal list-inside space-y-2 text-sm">
+                  <li>Configure repository URLs above and save</li>
+                  <li>Click "Pull Production Updates" or "Pull Beta Updates"</li>
+                  <li>System creates automatic backup and downloads changes</li>
+                  <li>Review changes (optional)</li>
+                  <li>Click "Deploy Changes" to apply and restart services</li>
+                  <li>Page will reload automatically after 15 seconds</li>
+                </ol>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </Layout>
