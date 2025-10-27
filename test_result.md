@@ -222,8 +222,8 @@ test_plan:
     - "FFmpeg probe display with detailed modal"
     - "Profile image upload UI"
     - "Backup & Restore page"
-  stuck_tasks:
     - "HLS web player fixes"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
