@@ -338,9 +338,16 @@ export default function Channels({ user, onLogout }) {
             {channels.map((channel, index) => (
               <Card key={index} data-testid={`channel-card-${index}`} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg flex items-center gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2 flex-1">
+                      <Checkbox
+                        checked={selectedChannels.some(c => c.url === channel.url)}
+                        onCheckedChange={() => handleSelectChannel(channel)}
+                        data-testid={`checkbox-${index}`}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <CardTitle className="text-lg flex items-center gap-2">
                         {channel.logo && (
                           <img src={channel.logo} alt={channel.name} className="w-8 h-8 rounded" onError={(e) => e.target.style.display = 'none'} />
                         )}
