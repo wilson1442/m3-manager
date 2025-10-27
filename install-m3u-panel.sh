@@ -208,11 +208,17 @@ print_success "Python dependencies installed in virtual environment"
 
 # Create .env file
 print_step "Creating backend environment configuration..."
+if [ "$USE_CLOUDFLARE" = "y" ]; then
+    CORS_ORIGINS="http://localhost:3000,http://$DOMAIN,https://$DOMAIN,$CLOUDFLARE_URL"
+else
+    CORS_ORIGINS="http://localhost:3000,http://$DOMAIN,https://$DOMAIN"
+fi
+
 cat > .env << EOF
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=m3u_panel
 SECRET_KEY=$(openssl rand -hex 32)
-CORS_ORIGINS=http://localhost:3000,http://$DOMAIN,https://$DOMAIN
+CORS_ORIGINS=$CORS_ORIGINS
 EOF
 print_success "Backend environment configured"
 
