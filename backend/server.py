@@ -1131,6 +1131,37 @@ async def update_theme(theme_data: ThemeUpdate, current_user: User = Depends(get
     await db.users.update_one({"id": current_user.id}, {"$set": {"theme": theme_data.theme}})
     return {"message": "Theme updated successfully"}
 
+@api_router.put("/profile/update", response_model=User)
+async def update_profile(user_data: UserUpdate, current_user: User = Depends(get_current_user)):
+    """Update current user's profile"""
+    update_data = {}
+    
+    if user_data.name is not None:
+        update_data['name'] = user_data.name
+    if user_data.password is not None:
+        update_data['password'] = get_password_hash(user_data.password)
+    if user_data.profile_image is not None:
+        # Validate it's a PNG (check base64 header)
+        if user_data.profile_image and not user_data.profile_image.startswith('data:image/png;base64,'):
+            raise HTTPException(status_code=400, detail="Profile image must be PNG format")
+        
+        # Check size (approximately - base64 is ~33% larger than binary)
+        # 2MB * 1.33 = ~2.66MB base64
+        if len(user_data.profile_image) > 2800000:
+            raise HTTPException(status_code=400, detail="Profile image must be less than 2MB")
+        
+        update_data['profile_image'] = user_data.profile_image
+    
+    if update_data:
+        await db.users.update_one({"id": current_user.id}, {"$set": update_data})
+    
+    # Fetch updated user
+    updated_doc = await db.users.find_one({"id": current_user.id}, {"_id": 0, "password": 0})
+    if isinstance(updated_doc['created_at'], str):
+        updated_doc['created_at'] = datetime.fromisoformat(updated_doc['created_at'])
+    
+    return User(**updated_doc)
+
 # Include the router in the main app
 app.include_router(api_router)
 
