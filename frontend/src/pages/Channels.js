@@ -311,12 +311,42 @@ export default function Channels({ user, onLogout }) {
                 controls
                 className="w-full h-full"
                 data-testid="video-player"
+                playsInline
+                crossOrigin="anonymous"
               />
             </div>
             <div className="text-sm text-muted-foreground space-y-1">
               <p><strong>Stream URL:</strong> {currentStream?.url}</p>
               <p><strong>Playlist:</strong> {currentStream?.playlist_name}</p>
-              <p className="text-xs">Note: If the stream doesn't play, it may be offline or require authentication.</p>
+              <div className="flex gap-2 mt-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open(currentStream?.url, '_blank')}
+                  data-testid="open-in-new-tab"
+                >
+                  Open in New Tab
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(currentStream?.url);
+                    toast.success("Stream URL copied!");
+                  }}
+                >
+                  Copy URL
+                </Button>
+              </div>
+              <p className="text-xs mt-2">
+                <strong>Note:</strong> If the stream doesn't play in the browser, it may be:
+              </p>
+              <ul className="text-xs list-disc list-inside space-y-1">
+                <li>Offline or unavailable</li>
+                <li>Requires authentication</li>
+                <li>Blocked by CORS policy</li>
+                <li>Try opening in a new tab or use a dedicated IPTV player (VLC, Kodi, etc.)</li>
+              </ul>
             </div>
           </DialogContent>
         </Dialog>
