@@ -267,15 +267,31 @@ async def fetch_player_api_data(player_api_url: str) -> dict:
                 if response.status == 200:
                     data = await response.json()
                     
-                    # Extract relevant fields - adjust based on actual API response
-                    result["max_connections"] = data.get("max_connections") or data.get("maxConnections") or data.get("max_cons")
-                    result["active_connections"] = data.get("active_connections") or data.get("activeConnections") or data.get("active_cons")
-                    result["expiration_date"] = data.get("exp_date") or data.get("expiration_date") or data.get("expires")
+                    # Check if data is nested under user_info (common format)
+                    user_info = data.get("user_info", data)
                     
-                    # If expiration is a timestamp, convert it
-                    if result["expiration_date"] and isinstance(result["expiration_date"], (int, float)):
-                        exp_dt = datetime.fromtimestamp(result["expiration_date"], tz=timezone.utc)
-                        result["expiration_date"] = exp_dt.isoformat()
+                    # Extract max connections
+                    max_conn = user_info.get("max_connections") or user_info.get("maxConnections") or user_info.get("max_cons")
+                    if max_conn:
+                        result["max_connections"] = int(max_conn) if isinstance(max_conn, str) else max_conn
+                    
+                    # Extract active connections
+                    active_conn = user_info.get("active_cons") or user_info.get("active_connections") or user_info.get("activeConnections")
+                    if active_conn:
+                        result["active_connections"] = int(active_conn) if isinstance(active_conn, str) else active_conn
+                    
+                    # Extract expiration date
+                    exp_date = user_info.get("exp_date") or user_info.get("expiration_date") or user_info.get("expires")
+                    if exp_date:
+                        # If it's a Unix timestamp (string or int)
+                        try:
+                            timestamp = int(exp_date) if isinstance(exp_date, str) else exp_date
+                            exp_dt = datetime.fromtimestamp(timestamp, tz=timezone.utc)
+                            # Format as MM/DD/YYYY
+                            result["expiration_date"] = exp_dt.strftime("%m/%d/%Y")
+                        except (ValueError, TypeError):
+                            # If it's already a formatted string, use it
+                            result["expiration_date"] = str(exp_date)
                 else:
                     result["error"] = f"HTTP {response.status}"
     except Exception as e:
