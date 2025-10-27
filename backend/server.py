@@ -693,6 +693,8 @@ async def get_m3u_playlists(current_user: User = Depends(get_current_user)):
             playlist['updated_at'] = datetime.fromisoformat(playlist['updated_at'])
         if playlist.get('last_refresh') and isinstance(playlist['last_refresh'], str):
             playlist['last_refresh'] = datetime.fromisoformat(playlist['last_refresh'])
+        if playlist.get('api_last_checked') and isinstance(playlist['api_last_checked'], str):
+            playlist['api_last_checked'] = datetime.fromisoformat(playlist['api_last_checked'])
     
     return playlists
 
