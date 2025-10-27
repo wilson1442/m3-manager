@@ -658,6 +658,7 @@ async def create_m3u(playlist_data: M3UPlaylistCreate, current_user: User = Depe
         name=playlist_data.name,
         url=playlist_data.url,
         content=playlist_data.content,
+        player_api=playlist_data.player_api,
         tenant_id=current_user.tenant_id,
         created_by=current_user.id
     )
@@ -665,6 +666,14 @@ async def create_m3u(playlist_data: M3UPlaylistCreate, current_user: User = Depe
     playlist_doc = playlist.model_dump()
     playlist_doc['created_at'] = playlist_doc['created_at'].isoformat()
     playlist_doc['updated_at'] = playlist_doc['updated_at'].isoformat()
+    
+    # Fetch player API data if URL provided
+    if playlist_data.player_api:
+        api_data = await fetch_player_api_data(playlist_data.player_api)
+        playlist_doc['max_connections'] = api_data.get('max_connections')
+        playlist_doc['active_connections'] = api_data.get('active_connections')
+        playlist_doc['expiration_date'] = api_data.get('expiration_date')
+        playlist_doc['api_last_checked'] = datetime.now(timezone.utc).isoformat()
     
     await db.m3u_playlists.insert_one(playlist_doc)
     
