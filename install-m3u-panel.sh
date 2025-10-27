@@ -87,7 +87,7 @@ print_success "System packages updated"
 # ============================================
 print_header "STEP 2: INSTALLING SYSTEM DEPENDENCIES"
 print_step "Installing curl, wget, git, build-essential, and ffmpeg..."
-apt install -y curl wget git build-essential software-properties-common ffmpeg gnupg nginx
+apt install -y curl wget git build-essential software-properties-common ffmpeg gnupg nginx python3-venv python3-full
 print_success "System dependencies installed"
 
 # ============================================
@@ -120,50 +120,79 @@ npm install -g yarn
 print_success "Node.js $(node -v) and Yarn $(yarn -v) installed"
 
 # ============================================
-# STEP 5: INSTALL PYTHON AND PIP
+# STEP 5: CREATE APPLICATION DIRECTORY
 # ============================================
-print_header "STEP 5: INSTALLING PYTHON 3 AND PIP"
-print_step "Installing Python 3 and pip..."
-apt install -y python3 python3-pip python3-venv
-print_success "Python $(python3 --version) installed"
-
-# ============================================
-# STEP 6: CREATE APPLICATION DIRECTORY
-# ============================================
-print_header "STEP 6: CREATING APPLICATION DIRECTORY"
+print_header "STEP 5: CREATING APPLICATION DIRECTORY"
 print_step "Creating directory: $INSTALL_DIR"
 mkdir -p $INSTALL_DIR
 cd $INSTALL_DIR
 print_success "Directory created"
 
 # ============================================
-# STEP 7: CREATE BACKEND APPLICATION
+# STEP 6: DOWNLOAD APPLICATION FILES
 # ============================================
-print_header "STEP 7: SETTING UP BACKEND"
-print_step "Creating backend directory and files..."
-mkdir -p backend
+print_header "STEP 6: DOWNLOADING APPLICATION FILES"
+print_info "This script assumes you have the application files ready."
+print_info "Please provide the application files in one of these ways:"
+echo ""
+echo "Option 1: Place files in $INSTALL_DIR before running this script"
+echo "Option 2: Provide a Git repository URL"
+echo "Option 3: Exit now and manually copy files, then re-run this script"
+echo ""
+read -p "Do you have a Git repository URL? (y/n): " HAS_GIT_REPO
 
-# Create requirements.txt
-cat > backend/requirements.txt << 'EOF'
-fastapi==0.110.1
-uvicorn==0.25.0
-motor==3.3.1
-python-dotenv==1.1.1
-passlib==1.7.4
-bcrypt==4.1.3
-PyJWT==2.10.1
-aiohttp==3.13.1
-apscheduler==3.11.0
-python-multipart==0.0.20
-EOF
+if [ "$HAS_GIT_REPO" = "y" ]; then
+    read -p "Enter Git repository URL: " GIT_REPO_URL
+    print_step "Cloning repository..."
+    if [ -d "backend" ] || [ -d "frontend" ]; then
+        print_error "Backend or frontend directory already exists. Please remove them first."
+        exit 1
+    fi
+    git clone "$GIT_REPO_URL" temp_clone
+    mv temp_clone/* .
+    mv temp_clone/.* . 2>/dev/null || true
+    rm -rf temp_clone
+    print_success "Repository cloned"
+else
+    # Check if files exist
+    if [ ! -d "backend" ] || [ ! -f "backend/server.py" ]; then
+        print_error "Backend files not found!"
+        echo ""
+        echo "Please copy your application files to $INSTALL_DIR with this structure:"
+        echo "  $INSTALL_DIR/backend/server.py"
+        echo "  $INSTALL_DIR/backend/requirements.txt"
+        echo "  $INSTALL_DIR/frontend/package.json"
+        echo "  $INSTALL_DIR/frontend/src/"
+        echo "  $INSTALL_DIR/frontend/public/"
+        echo ""
+        echo "After copying files, run this script again."
+        exit 1
+    fi
+    print_success "Application files found"
+fi
 
-print_step "Installing Python dependencies..."
-pip3 install -r backend/requirements.txt
-print_success "Python dependencies installed"
+# ============================================
+# STEP 7: SETUP BACKEND WITH VIRTUAL ENVIRONMENT
+# ============================================
+print_header "STEP 7: SETTING UP BACKEND WITH VIRTUAL ENVIRONMENT"
+cd $INSTALL_DIR/backend
+
+# Create virtual environment
+print_step "Creating Python virtual environment..."
+python3 -m venv venv
+print_success "Virtual environment created"
+
+# Activate venv and install dependencies
+print_step "Installing Python dependencies in virtual environment..."
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+deactivate
+print_success "Python dependencies installed in virtual environment"
 
 # Create .env file
 print_step "Creating backend environment configuration..."
-cat > backend/.env << EOF
+cat > .env << EOF
 MONGO_URL=mongodb://localhost:27017
 DB_NAME=m3u_panel
 SECRET_KEY=$(openssl rand -hex 32)
@@ -171,54 +200,14 @@ CORS_ORIGINS=http://localhost:3000,http://$DOMAIN,https://$DOMAIN
 EOF
 print_success "Backend environment configured"
 
-print_info "Backend will be configured after file extraction..."
-
 # ============================================
-# STEP 8: CREATE FRONTEND APPLICATION
+# STEP 8: SETUP FRONTEND
 # ============================================
 print_header "STEP 8: SETTING UP FRONTEND"
-print_step "Creating frontend directory..."
-mkdir -p frontend
-
-print_info "Frontend will be configured after file extraction..."
-
-# ============================================
-# STEP 9: EXTRACT APPLICATION FILES
-# ============================================
-print_header "STEP 9: APPLICATION FILES"
-echo ""
-print_error "APPLICATION FILES MISSING"
-echo ""
-echo "This installation script needs the application source code files."
-echo "Please follow these steps:"
-echo ""
-echo "1. Download or clone the M3U Management Panel source code"
-echo "2. Copy the following directories to $INSTALL_DIR:"
-echo "   - backend/server.py (and all backend Python files)"
-echo "   - frontend/src/ (all React source files)"
-echo "   - frontend/public/ (public assets)"
-echo "   - frontend/package.json"
-echo "   - frontend/tailwind.config.js"
-echo "   - frontend/postcss.config.js"
-echo ""
-echo "3. After copying files, re-run this script or continue manually"
-echo ""
-read -p "Have you copied the application files? (y/n): " FILES_COPIED
-
-if [ "$FILES_COPIED" != "y" ]; then
-    print_info "Installation paused. Copy files and run: $0"
-    exit 0
-fi
-
-# ============================================
-# STEP 10: INSTALL FRONTEND DEPENDENCIES
-# ============================================
-print_header "STEP 10: INSTALLING FRONTEND DEPENDENCIES"
 cd $INSTALL_DIR/frontend
 
 if [ ! -f "package.json" ]; then
     print_error "package.json not found in $INSTALL_DIR/frontend"
-    print_info "Please copy frontend files and run: cd $INSTALL_DIR/frontend && yarn install"
     exit 1
 fi
 
@@ -242,9 +231,9 @@ yarn build
 print_success "Frontend built successfully"
 
 # ============================================
-# STEP 11: CREATE SYSTEMD SERVICES
+# STEP 9: CREATE SYSTEMD SERVICES
 # ============================================
-print_header "STEP 11: CREATING SYSTEMD SERVICES"
+print_header "STEP 9: CREATING SYSTEMD SERVICES"
 
 # Backend service
 print_step "Creating backend systemd service..."
@@ -258,8 +247,8 @@ Requires=mongodb.service
 Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR/backend
-Environment="PATH=/usr/local/bin:/usr/bin:/bin"
-ExecStart=/usr/bin/python3 -m uvicorn server:app --host 0.0.0.0 --port 8001
+Environment="PATH=$INSTALL_DIR/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=$INSTALL_DIR/backend/venv/bin/python -m uvicorn server:app --host 0.0.0.0 --port 8001
 Restart=always
 RestartSec=10
 
@@ -267,7 +256,7 @@ RestartSec=10
 WantedBy=multi-user.target
 EOF
 
-# Frontend service (serve build)
+# Frontend service (serve build with npx serve)
 print_step "Creating frontend systemd service..."
 cat > /etc/systemd/system/m3u-frontend.service << EOF
 [Unit]
@@ -292,9 +281,9 @@ systemctl daemon-reload
 print_success "Systemd services created"
 
 # ============================================
-# STEP 12: CONFIGURE NGINX
+# STEP 10: CONFIGURE NGINX
 # ============================================
-print_header "STEP 12: CONFIGURING NGINX REVERSE PROXY"
+print_header "STEP 10: CONFIGURING NGINX REVERSE PROXY"
 print_step "Creating nginx configuration..."
 
 cat > /etc/nginx/sites-available/m3u-panel << EOF
@@ -345,40 +334,18 @@ systemctl enable nginx
 print_success "Nginx configured and running"
 
 # ============================================
-# STEP 13: CREATE DEFAULT ADMIN USER
+# STEP 11: START SERVICES
 # ============================================
-print_header "STEP 13: CREATING DEFAULT ADMIN USER"
-print_step "Starting backend temporarily to initialize database..."
-
-# Start backend
-cd $INSTALL_DIR/backend
-python3 -m uvicorn server:app --host 0.0.0.0 --port 8001 &
-BACKEND_PID=$!
-sleep 5
-
-print_step "Creating admin user via API..."
-curl -X POST http://localhost:8001/api/auth/register \
-    -H "Content-Type: application/json" \
-    -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\",\"role\":\"super_admin\"}" \
-    > /dev/null 2>&1 || print_info "Admin user may already exist or API not ready"
-
-kill $BACKEND_PID 2>/dev/null || true
-sleep 2
-print_success "Admin user configured"
-
-# ============================================
-# STEP 14: START SERVICES
-# ============================================
-print_header "STEP 14: STARTING ALL SERVICES"
+print_header "STEP 11: STARTING ALL SERVICES"
 print_step "Starting backend service..."
 systemctl start m3u-backend
 systemctl enable m3u-backend
-sleep 3
+sleep 5
 
 print_step "Starting frontend service..."
 systemctl start m3u-frontend
 systemctl enable m3u-frontend
-sleep 3
+sleep 5
 
 # Check service status
 print_step "Checking service status..."
@@ -386,26 +353,50 @@ if systemctl is-active --quiet m3u-backend; then
     print_success "Backend service is running"
 else
     print_error "Backend service failed to start"
-    systemctl status m3u-backend --no-pager
+    echo "Checking logs:"
+    journalctl -u m3u-backend -n 20 --no-pager
 fi
 
 if systemctl is-active --quiet m3u-frontend; then
     print_success "Frontend service is running"
 else
     print_error "Frontend service failed to start"
-    systemctl status m3u-frontend --no-pager
+    echo "Checking logs:"
+    journalctl -u m3u-frontend -n 20 --no-pager
 fi
 
 # ============================================
-# STEP 15: FIREWALL CONFIGURATION
+# STEP 12: CREATE DEFAULT ADMIN USER
 # ============================================
-print_header "STEP 15: CONFIGURING FIREWALL"
+print_header "STEP 12: CREATING DEFAULT ADMIN USER"
+print_step "Waiting for backend to be fully ready..."
+sleep 10
+
+print_step "Creating admin user via API..."
+REGISTER_RESPONSE=$(curl -s -X POST http://localhost:8001/api/auth/register \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"$ADMIN_USER\",\"password\":\"$ADMIN_PASS\",\"role\":\"super_admin\"}")
+
+if echo "$REGISTER_RESPONSE" | grep -q "access_token"; then
+    print_success "Admin user created successfully"
+elif echo "$REGISTER_RESPONSE" | grep -q "already exists"; then
+    print_info "Admin user already exists"
+else
+    print_info "Admin user creation status unknown - check manually"
+fi
+
+# ============================================
+# STEP 13: FIREWALL CONFIGURATION
+# ============================================
+print_header "STEP 13: CONFIGURING FIREWALL"
 print_step "Checking if UFW is installed..."
 if command -v ufw &> /dev/null; then
     print_step "Allowing HTTP (port 80) through firewall..."
     ufw allow 80/tcp
     print_step "Allowing HTTPS (port 443) through firewall..."
     ufw allow 443/tcp
+    print_step "Allowing SSH (port 22) through firewall..."
+    ufw allow 22/tcp
     print_success "Firewall rules configured"
 else
     print_info "UFW not installed, skipping firewall configuration"
@@ -420,9 +411,11 @@ echo -e "${GREEN}✓ M3U Management Panel has been successfully installed!${NC}"
 echo ""
 print_header "ACCESS INFORMATION"
 echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "Web Interface:     http://$DOMAIN"
 echo "Admin Username:    $ADMIN_USER"
 echo "Admin Password:    $ADMIN_PASS"
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
 print_header "SYSTEM INFORMATION"
 echo ""
@@ -431,6 +424,8 @@ echo "Backend Service:         m3u-backend"
 echo "Frontend Service:        m3u-frontend"
 echo "MongoDB Service:         mongod"
 echo "Nginx Service:           nginx"
+echo ""
+echo "Python Virtual Environment: $INSTALL_DIR/backend/venv"
 echo ""
 print_header "USEFUL COMMANDS"
 echo ""
@@ -457,6 +452,10 @@ echo "For issues or questions:"
 echo "- Check logs: journalctl -u m3u-backend -n 100"
 echo "- Verify services: systemctl status m3u-backend m3u-frontend"
 echo "- Restart services: systemctl restart m3u-backend m3u-frontend"
+echo ""
+echo "Backend Python environment:"
+echo "- Activate venv: source $INSTALL_DIR/backend/venv/bin/activate"
+echo "- Install packages: $INSTALL_DIR/backend/venv/bin/pip install package_name"
 echo ""
 print_success "Installation script completed successfully!"
 echo ""
