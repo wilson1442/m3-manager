@@ -59,57 +59,77 @@ export default function Channels({ user, onLogout }) {
           console.log("Using HLS.js for playback");
           const hls = new Hls({
             enableWorker: true,
-            lowLatencyMode: true,
+            lowLatencyMode: false,
             backBufferLength: 90,
-            debug: false,
+            debug: true,
+            xhrSetup: function(xhr, url) {
+              // Don't set CORS mode - let browser handle it
+              xhr.withCredentials = false;
+            },
           });
 
           hls.loadSource(streamUrl);
           hls.attachMedia(video);
 
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            console.log("Manifest parsed, starting playback");
-            video.play().catch(err => {
+          hls.on(Hls.Events.MANIFEST_PARSED, (event, data) => {
+            console.log("Manifest parsed successfully, levels:", data.levels);
+            toast.success("Stream loaded! Starting playback...");
+            
+            video.play().then(() => {
+              console.log("Playback started successfully");
+            }).catch(err => {
               console.error("Playback failed:", err);
-              toast.error("Failed to play stream. Stream may be offline or blocked by CORS.");
+              toast.error("Autoplay blocked. Click the play button on the video.");
             });
+          });
+
+          hls.on(Hls.Events.LEVEL_LOADED, (event, data) => {
+            console.log("Level loaded:", data.details);
+          });
+
+          hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+            console.log("Fragment loaded successfully");
           });
 
           hls.on(Hls.Events.ERROR, (event, data) => {
             console.error("HLS Error:", data);
+            
             if (data.fatal) {
               switch (data.type) {
                 case Hls.ErrorTypes.NETWORK_ERROR:
-                  console.log("Network error - trying to recover");
-                  toast.error("Network error - stream may be offline");
-                  hls.startLoad();
+                  console.log("Fatal network error, trying to recover");
+                  toast.error("Network error - retrying...");
+                  setTimeout(() => hls.startLoad(), 1000);
                   break;
                 case Hls.ErrorTypes.MEDIA_ERROR:
-                  console.log("Media error - trying to recover");
-                  toast.error("Media error - trying to recover");
+                  console.log("Fatal media error, trying to recover");
+                  toast.error("Media error - recovering...");
                   hls.recoverMediaError();
                   break;
                 default:
-                  toast.error("Cannot play stream: " + data.details);
+                  console.log("Fatal error, cannot recover");
+                  toast.error("Stream cannot be played: " + (data.details || "Unknown error"));
                   hls.destroy();
                   break;
               }
+            } else {
+              console.log("Non-fatal error:", data.details);
             }
           });
 
           hlsRef.current = hls;
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           // For Safari which has native HLS support
-          console.log("Using native HLS support");
+          console.log("Using native HLS support (Safari)");
           video.src = streamUrl;
           video.addEventListener('loadedmetadata', () => {
             video.play().catch(err => {
               console.error("Playback failed:", err);
-              toast.error("Failed to play stream");
+              toast.error("Autoplay blocked. Click play button.");
             });
           });
         } else {
-          toast.error("Your browser doesn't support HLS playback");
+          toast.error("Your browser doesn't support HLS playback. Try Chrome, Firefox, or Safari.");
         }
       } else {
         // For non-HLS streams (mp4, etc)
@@ -117,7 +137,7 @@ export default function Channels({ user, onLogout }) {
         video.src = streamUrl;
         video.play().catch(err => {
           console.error("Playback failed:", err);
-          toast.error("Failed to play stream. Stream may be offline.");
+          toast.error("Failed to play stream. Click play button to try again.");
         });
       }
     }
