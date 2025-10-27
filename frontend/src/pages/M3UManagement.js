@@ -98,7 +98,7 @@ export default function M3UManagement({ user, onLogout }) {
       });
       toast.success("Playlist added successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", url: "", content: "" });
+      setFormData({ name: "", url: "", content: "", player_api: "" });
       fetchPlaylists();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to add playlist");
