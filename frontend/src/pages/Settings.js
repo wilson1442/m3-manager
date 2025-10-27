@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { toast } from "sonner";
-import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon } from "lucide-react";
+import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon, RefreshCw, GitBranch, AlertTriangle } from "lucide-react";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
