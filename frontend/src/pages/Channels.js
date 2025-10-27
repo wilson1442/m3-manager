@@ -305,7 +305,35 @@ export default function Channels({ user, onLogout }) {
         </Card>
 
         {channels.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6 flex justify-between items-center">
+                <div className="flex items-center gap-4">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSelectAll}
+                    data-testid="select-all-btn"
+                  >
+                    {selectedChannels.length === channels.length ? "Deselect All" : "Select All"}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedChannels.length} of {channels.length} selected
+                  </span>
+                </div>
+                <Button
+                  onClick={handleExportM3U}
+                  disabled={selectedChannels.length === 0}
+                  data-testid="export-m3u-btn"
+                  className="gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Export to M3U
+                </Button>
+              </CardContent>
+            </Card>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {channels.map((channel, index) => (
               <Card key={index} data-testid={`channel-card-${index}`} className="hover:shadow-lg transition-shadow">
                 <CardHeader className="pb-3">
