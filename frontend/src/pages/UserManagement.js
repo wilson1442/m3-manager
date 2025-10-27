@@ -29,7 +29,9 @@ export default function UserManagement({ user, onLogout }) {
     password: "", 
     name: "",
     tenant_id: "",
-    role: "user"
+    role: "user",
+    createNewTenant: false,
+    newTenantName: ""
   });
   const [editFormData, setEditFormData] = useState({
     name: "",
