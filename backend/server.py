@@ -213,6 +213,12 @@ class StreamProbeResult(BaseModel):
     online: bool
     response_time: Optional[float] = None
     error: Optional[str] = None
+    bitrate: Optional[str] = None
+    resolution: Optional[str] = None
+    audio_codec: Optional[str] = None
+    video_codec: Optional[str] = None
+    stream_type: Optional[str] = None
+    variants: Optional[List[dict]] = None
 
 class ThemeUpdate(BaseModel):
     theme: str
