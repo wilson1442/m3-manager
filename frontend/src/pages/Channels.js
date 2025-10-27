@@ -272,40 +272,40 @@ export default function Channels({ user, onLogout }) {
                       </div>
                       
                       {channelStatus[channel.url].online && (
-                        <div className="text-xs space-y-1 text-muted-foreground">
+                        <div className="text-xs space-y-1 text-muted-foreground bg-muted/50 p-3 rounded-md">
                           {channelStatus[channel.url].stream_type && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Type:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Type:</span>
                               <span>{channelStatus[channel.url].stream_type}</span>
                             </div>
                           )}
                           {channelStatus[channel.url].resolution && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Resolution:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Resolution:</span>
                               <span className="font-mono">{channelStatus[channel.url].resolution}</span>
                             </div>
                           )}
                           {channelStatus[channel.url].bitrate && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Bitrate:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Bitrate:</span>
                               <span className="font-mono">{channelStatus[channel.url].bitrate}</span>
                             </div>
                           )}
                           {channelStatus[channel.url].video_codec && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Video:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Video:</span>
                               <span className="font-mono text-xs">{channelStatus[channel.url].video_codec}</span>
                             </div>
                           )}
                           {channelStatus[channel.url].audio_codec && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Audio:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Audio:</span>
                               <span className="font-mono text-xs">{channelStatus[channel.url].audio_codec}</span>
                             </div>
                           )}
                           {channelStatus[channel.url].variants && channelStatus[channel.url].variants.length > 1 && (
-                            <div className="flex justify-between">
-                              <span className="font-medium">Variants:</span>
+                            <div className="flex gap-2">
+                              <span className="font-medium min-w-[80px]">Variants:</span>
                               <span>{channelStatus[channel.url].variants.length} qualities available</span>
                             </div>
                           )}
