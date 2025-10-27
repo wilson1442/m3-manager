@@ -352,10 +352,11 @@ export default function Channels({ user, onLogout }) {
                           <img src={channel.logo} alt={channel.name} className="w-8 h-8 rounded" onError={(e) => e.target.style.display = 'none'} />
                         )}
                         <span className="line-clamp-1">{channel.name}</span>
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        {channel.group && <Badge variant="secondary" className="text-xs">{channel.group}</Badge>}
-                      </CardDescription>
+                        </CardTitle>
+                        <CardDescription className="mt-1">
+                          {channel.group && <Badge variant="secondary" className="text-xs">{channel.group}</Badge>}
+                        </CardDescription>
+                      </div>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">From: {channel.playlist_name}</p>
