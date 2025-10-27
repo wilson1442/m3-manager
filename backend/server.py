@@ -428,6 +428,7 @@ class User(BaseModel):
     role: str  # super_admin, tenant_owner, user
     tenant_id: Optional[str] = None
     theme: str = "light"  # light or dark
+    profile_image: Optional[str] = None  # base64 encoded PNG
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class UserCreate(BaseModel):
@@ -440,6 +441,7 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     password: Optional[str] = None
+    profile_image: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
