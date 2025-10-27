@@ -787,6 +787,8 @@ async def update_user(user_id: str, user_data: UserUpdate, current_user: User = 
         update_data['name'] = user_data.name
     if user_data.password is not None:
         update_data['password'] = get_password_hash(user_data.password)
+    if user_data.profile_image is not None:
+        update_data['profile_image'] = user_data.profile_image
     
     if update_data:
         await db.users.update_one({"id": user_id}, {"$set": update_data})
