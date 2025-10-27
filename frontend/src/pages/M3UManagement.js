@@ -137,7 +137,12 @@ export default function M3UManagement({ user, onLogout }) {
 
   const openEditDialog = (playlist) => {
     setSelectedPlaylist(playlist);
-    setFormData({ name: playlist.name, url: playlist.url, content: playlist.content || "" });
+    setFormData({ 
+      name: playlist.name, 
+      url: playlist.url, 
+      content: playlist.content || "",
+      player_api: playlist.player_api || ""
+    });
     setIsEditDialogOpen(true);
   };
 
