@@ -1162,6 +1162,220 @@ async def update_profile(user_data: UserUpdate, current_user: User = Depends(get
     
     return User(**updated_doc)
 
+# Backup and Restore routes (Super Admin only)
+@api_router.get("/backup/full")
+async def backup_full_database(current_user: User = Depends(get_current_user)):
+    """Backup entire database (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can backup the full database")
+    
+    try:
+        backup_data = {
+            "backup_date": datetime.now(timezone.utc).isoformat(),
+            "backup_type": "full",
+            "collections": {}
+        }
+        
+        # Backup all collections
+        collections = ["users", "tenants", "m3u_playlists", "monitored_categories"]
+        
+        for collection_name in collections:
+            collection = db[collection_name]
+            docs = await collection.find({}, {"_id": 0}).to_list(10000)
+            
+            # Convert datetime objects to ISO strings
+            for doc in docs:
+                for key, value in doc.items():
+                    if isinstance(value, datetime):
+                        doc[key] = value.isoformat()
+            
+            backup_data["collections"][collection_name] = docs
+        
+        return backup_data
+    except Exception as e:
+        logger.error(f"Error creating full backup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backup failed: {str(e)}")
+
+@api_router.get("/backup/tenant/{tenant_id}")
+async def backup_tenant(tenant_id: str, current_user: User = Depends(get_current_user)):
+    """Backup specific tenant data (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can backup tenant data")
+    
+    try:
+        # Verify tenant exists
+        tenant = await db.tenants.find_one({"id": tenant_id}, {"_id": 0})
+        if not tenant:
+            raise HTTPException(status_code=404, detail="Tenant not found")
+        
+        backup_data = {
+            "backup_date": datetime.now(timezone.utc).isoformat(),
+            "backup_type": "tenant",
+            "tenant_id": tenant_id,
+            "tenant_name": tenant.get("name"),
+            "data": {}
+        }
+        
+        # Backup tenant info
+        if tenant.get('created_at') and isinstance(tenant['created_at'], datetime):
+            tenant['created_at'] = tenant['created_at'].isoformat()
+        backup_data["data"]["tenant"] = tenant
+        
+        # Backup users in this tenant
+        users = await db.users.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+        for user in users:
+            if user.get('created_at') and isinstance(user['created_at'], datetime):
+                user['created_at'] = user['created_at'].isoformat()
+        backup_data["data"]["users"] = users
+        
+        # Backup M3U playlists for this tenant
+        playlists = await db.m3u_playlists.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+        for playlist in playlists:
+            for date_field in ['created_at', 'updated_at', 'last_refresh', 'api_last_checked']:
+                if playlist.get(date_field) and isinstance(playlist[date_field], datetime):
+                    playlist[date_field] = playlist[date_field].isoformat()
+        backup_data["data"]["m3u_playlists"] = playlists
+        
+        # Backup monitored categories for this tenant
+        categories = await db.monitored_categories.find({"tenant_id": tenant_id}, {"_id": 0}).to_list(1000)
+        for category in categories:
+            if category.get('created_at') and isinstance(category['created_at'], datetime):
+                category['created_at'] = category['created_at'].isoformat()
+        backup_data["data"]["monitored_categories"] = categories
+        
+        return backup_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating tenant backup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Backup failed: {str(e)}")
+
+@api_router.post("/restore/full")
+async def restore_full_database(backup_data: dict, current_user: User = Depends(get_current_user)):
+    """Restore entire database from backup (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can restore the full database")
+    
+    try:
+        if backup_data.get("backup_type") != "full":
+            raise HTTPException(status_code=400, detail="Invalid backup type for full restore")
+        
+        collections_data = backup_data.get("collections", {})
+        if not collections_data:
+            raise HTTPException(status_code=400, detail="No collection data found in backup")
+        
+        # Restore each collection
+        restored_counts = {}
+        for collection_name, docs in collections_data.items():
+            if not docs:
+                continue
+            
+            collection = db[collection_name]
+            
+            # Clear existing data
+            await collection.delete_many({})
+            
+            # Convert ISO strings back to datetime objects
+            for doc in docs:
+                for key, value in doc.items():
+                    if isinstance(value, str) and ('_at' in key or key == 'last_refresh'):
+                        try:
+                            doc[key] = datetime.fromisoformat(value)
+                        except:
+                            pass
+            
+            # Insert backup data
+            if docs:
+                await collection.insert_many(docs)
+            restored_counts[collection_name] = len(docs)
+        
+        return {
+            "message": "Full database restored successfully",
+            "restored_counts": restored_counts,
+            "backup_date": backup_data.get("backup_date")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error restoring full backup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
+
+@api_router.post("/restore/tenant")
+async def restore_tenant(backup_data: dict, current_user: User = Depends(get_current_user)):
+    """Restore tenant data from backup (Super Admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can restore tenant data")
+    
+    try:
+        if backup_data.get("backup_type") != "tenant":
+            raise HTTPException(status_code=400, detail="Invalid backup type for tenant restore")
+        
+        tenant_id = backup_data.get("tenant_id")
+        if not tenant_id:
+            raise HTTPException(status_code=400, detail="No tenant ID found in backup")
+        
+        tenant_data = backup_data.get("data", {})
+        if not tenant_data:
+            raise HTTPException(status_code=400, detail="No tenant data found in backup")
+        
+        # Delete existing tenant data
+        await db.tenants.delete_many({"id": tenant_id})
+        await db.users.delete_many({"tenant_id": tenant_id})
+        await db.m3u_playlists.delete_many({"tenant_id": tenant_id})
+        await db.monitored_categories.delete_many({"tenant_id": tenant_id})
+        
+        restored_counts = {}
+        
+        # Restore tenant
+        if tenant_data.get("tenant"):
+            tenant = tenant_data["tenant"]
+            if tenant.get('created_at') and isinstance(tenant['created_at'], str):
+                tenant['created_at'] = datetime.fromisoformat(tenant['created_at'])
+            await db.tenants.insert_one(tenant)
+            restored_counts["tenant"] = 1
+        
+        # Restore users
+        if tenant_data.get("users"):
+            users = tenant_data["users"]
+            for user in users:
+                if user.get('created_at') and isinstance(user['created_at'], str):
+                    user['created_at'] = datetime.fromisoformat(user['created_at'])
+            await db.users.insert_many(users)
+            restored_counts["users"] = len(users)
+        
+        # Restore M3U playlists
+        if tenant_data.get("m3u_playlists"):
+            playlists = tenant_data["m3u_playlists"]
+            for playlist in playlists:
+                for date_field in ['created_at', 'updated_at', 'last_refresh', 'api_last_checked']:
+                    if playlist.get(date_field) and isinstance(playlist[date_field], str):
+                        try:
+                            playlist[date_field] = datetime.fromisoformat(playlist[date_field])
+                        except:
+                            pass
+            await db.m3u_playlists.insert_many(playlists)
+            restored_counts["m3u_playlists"] = len(playlists)
+        
+        # Restore monitored categories
+        if tenant_data.get("monitored_categories"):
+            categories = tenant_data["monitored_categories"]
+            for category in categories:
+                if category.get('created_at') and isinstance(category['created_at'], str):
+                    category['created_at'] = datetime.fromisoformat(category['created_at'])
+            await db.monitored_categories.insert_many(categories)
+            restored_counts["monitored_categories"] = len(categories)
+        
+        return {
+            "message": f"Tenant '{tenant_data.get('tenant', {}).get('name')}' restored successfully",
+            "restored_counts": restored_counts,
+            "backup_date": backup_data.get("backup_date")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error restoring tenant backup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
+
 # Include the router in the main app
 app.include_router(api_router)
 
