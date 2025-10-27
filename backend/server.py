@@ -297,11 +297,17 @@ class M3UPlaylist(BaseModel):
     name: str
     url: str
     content: Optional[str] = None
+    player_api: Optional[str] = None
     tenant_id: str
     created_by: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_refresh: Optional[datetime] = None
+    # Player API data
+    max_connections: Optional[int] = None
+    active_connections: Optional[int] = None
+    expiration_date: Optional[str] = None
+    api_last_checked: Optional[datetime] = None
 
 class M3UPlaylistCreate(BaseModel):
     name: str
