@@ -1164,9 +1164,10 @@ async def add_monitored_category(category_data: MonitoredCategoryCreate, current
 
 @api_router.get("/categories/monitor", response_model=List[MonitoredCategory])
 async def get_monitored_categories(current_user: User = Depends(get_current_user)):
-    """Get all monitored categories for user's tenant"""
+    """Get all monitored categories for user's tenant (empty for super admin without tenant)"""
     if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        # Super admin without tenant cannot monitor categories (tenant-specific feature)
+        return []
     
     categories = await db.monitored_categories.find(
         {"tenant_id": current_user.tenant_id},
