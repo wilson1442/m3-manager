@@ -99,6 +99,29 @@ export default function Dashboard({ user, onLogout }) {
           <p className="text-base text-muted-foreground">Manage your M3U playlists and settings</p>
         </div>
 
+        {/* Dashboard Notes */}
+        {!loadingNotes && notes && notes.content && (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-primary" />
+                <CardTitle>Administrator Notes</CardTitle>
+              </div>
+              {notes.updated_at && (
+                <CardDescription>
+                  Last updated by {notes.updated_by} on {new Date(notes.updated_at).toLocaleString()}
+                </CardDescription>
+              )}
+            </CardHeader>
+            <CardContent>
+              <div 
+                className="prose prose-sm dark:prose-invert max-w-none"
+                dangerouslySetInnerHTML={{ __html: notes.content }}
+              />
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-shadow">
