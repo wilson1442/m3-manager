@@ -1522,6 +1522,44 @@ async def restore_tenant(backup_data: dict, current_user: User = Depends(get_cur
             await db.monitored_categories.insert_many(categories)
             restored_counts["monitored_categories"] = len(categories)
         
+
+
+# Dashboard Notes routes
+@api_router.get("/dashboard/notes")
+async def get_dashboard_notes(current_user: User = Depends(get_current_user)):
+    """Get dashboard notes (visible to all users)"""
+    notes = await db.dashboard_notes.find_one({}, {"_id": 0})
+    if not notes:
+        # Return default empty notes
+        return {"content": "", "updated_by": "", "updated_at": None}
+    
+    if isinstance(notes.get('updated_at'), str):
+        notes['updated_at'] = datetime.fromisoformat(notes['updated_at'])
+    
+    return notes
+
+@api_router.put("/dashboard/notes")
+async def update_dashboard_notes(
+    notes_update: DashboardNotesUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update dashboard notes (super admin only)"""
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can update notes")
+    
+    notes_data = {
+        "id": str(uuid.uuid4()),
+        "content": notes_update.content,
+        "updated_by": current_user.username,
+        "updated_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Replace or insert the notes (only one document)
+    await db.dashboard_notes.delete_many({})
+    await db.dashboard_notes.insert_one(notes_data)
+    
+    return {"message": "Notes updated successfully", "notes": notes_data}
+
         return {
             "message": f"Tenant '{tenant_data.get('tenant', {}).get('name')}' restored successfully",
             "restored_counts": restored_counts,
