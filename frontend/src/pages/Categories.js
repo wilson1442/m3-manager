@@ -134,54 +134,106 @@ export default function Categories({ user, onLogout }) {
           <p className="text-base text-muted-foreground">Toggle categories to monitor on Events page</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Categories</CardTitle>
-            <CardDescription>
-              {monitoredCategories.length} of {categories.length} categories monitored
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="text-center py-8 text-muted-foreground">Loading...</div>
-            ) : categories.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">No categories found</div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {categories.map((category, index) => {
-                  const monitored = isMonitored(category);
-                  return (
-                    <div
-                      key={index}
-                      data-testid={`category-${index}`}
-                      className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
-                        monitored ? 'bg-primary/5 border-primary/20' : 'hover:bg-accent'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {monitored && <Eye className="h-4 w-4 text-primary" />}
-                        <Badge variant={monitored ? "default" : "secondary"} className="text-sm">
-                          {category}
-                        </Badge>
+        {/* Filter */}
+        {categories.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-muted-foreground" />
+            <Select value={selectedPlaylist} onValueChange={setSelectedPlaylist}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue placeholder="Filter by playlist" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Playlists</SelectItem>
+                {playlists.map((playlist) => (
+                  <SelectItem key={playlist.id} value={playlist.name}>
+                    {playlist.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {loading ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">Loading...</div>
+            </CardContent>
+          </Card>
+        ) : Object.keys(groupedCategories).length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center text-muted-foreground">No categories found</div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(groupedCategories).map(([source, sourceCategories]) => (
+              <Card key={source}>
+                <Collapsible 
+                  open={!collapsedSources[source]}
+                  onOpenChange={() => toggleSource(source)}
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                          {collapsedSources[source] ? (
+                            <ChevronRight className="h-5 w-5" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5" />
+                          )}
+                          {source}
+                          <Badge variant="secondary">{sourceCategories.length} categories</Badge>
+                        </CardTitle>
+                        <CardDescription>
+                          {sourceCategories.filter(cat => isMonitored(cat.name)).length} monitored
+                        </CardDescription>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Label htmlFor={`toggle-${index}`} className="text-xs text-muted-foreground cursor-pointer">
-                          {monitored ? 'On' : 'Off'}
-                        </Label>
-                        <Switch
-                          id={`toggle-${index}`}
-                          checked={monitored}
-                          onCheckedChange={() => handleToggle(category, monitored)}
-                          data-testid={`toggle-${index}`}
-                        />
+                    </CardHeader>
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {sourceCategories.map((category, index) => {
+                          const monitored = isMonitored(category.name);
+                          return (
+                            <div
+                              key={`${source}-${index}`}
+                              data-testid={`category-${index}`}
+                              className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                                monitored ? 'bg-primary/5 border-primary/20' : 'hover:bg-accent'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                {monitored && <Eye className="h-4 w-4 text-primary" />}
+                                <Badge variant={monitored ? "default" : "secondary"} className="text-sm">
+                                  {category.name}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Label htmlFor={`toggle-${source}-${index}`} className="text-xs text-muted-foreground cursor-pointer">
+                                  {monitored ? 'On' : 'Off'}
+                                </Label>
+                                <Switch
+                                  id={`toggle-${source}-${index}`}
+                                  checked={monitored}
+                                  onCheckedChange={() => handleToggle(category.name, monitored)}
+                                  data-testid={`toggle-${index}`}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </Layout>
   );
