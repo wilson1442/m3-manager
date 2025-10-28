@@ -154,6 +154,8 @@ export default function TenantManagement({ user, onLogout }) {
                   <TableRow>
                     <TableHead>Tenant Name</TableHead>
                     <TableHead>Owner ID</TableHead>
+                    <TableHead>Expiration Date</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Created At</TableHead>
                   </TableRow>
                 </TableHeader>
