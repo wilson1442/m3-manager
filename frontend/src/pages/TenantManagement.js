@@ -114,6 +114,18 @@ export default function TenantManagement({ user, onLogout }) {
                     required
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="expiration_date">Expiration Date</Label>
+                  <Input
+                    id="expiration_date"
+                    data-testid="tenant-expiration-date-input"
+                    type="date"
+                    value={formData.expiration_date}
+                    onChange={(e) => setFormData({ ...formData, expiration_date: e.target.value })}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">Tenant access will expire on this date</p>
+                </div>
                 <Button type="submit" data-testid="submit-add-tenant-btn" className="w-full">
                   Create Tenant
                 </Button>
