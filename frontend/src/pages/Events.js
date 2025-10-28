@@ -170,7 +170,7 @@ export default function Events({ user, onLogout }) {
                     <CollapsibleTrigger className="w-full" data-testid={`toggle-${category}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          {openCategories[category] ? (
+                          {!collapsedSources[category] ? (
                             <ChevronDown className="h-5 w-5 text-muted-foreground" />
                           ) : (
                             <ChevronRight className="h-5 w-5 text-muted-foreground" />
