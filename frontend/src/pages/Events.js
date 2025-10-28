@@ -163,7 +163,7 @@ export default function Events({ user, onLogout }) {
             {Object.entries(groupedChannels).map(([category, categoryChannels]) => (
               <Card key={category} data-testid={`category-${category}`}>
                 <Collapsible
-                  open={openCategories[category]}
+                  open={!collapsedSources[category]}
                   onOpenChange={() => toggleCategory(category)}
                 >
                   <CardHeader className="cursor-pointer hover:bg-accent/50 transition-colors">
