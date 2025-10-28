@@ -92,6 +92,12 @@ export default function Categories({ user, onLogout }) {
   };
 
   const handleToggle = async (categoryName, isCurrentlyMonitored) => {
+    // Check if user can monitor (has tenant_id)
+    if (!user.tenant_id) {
+      toast.error("Monitoring is only available for users with a tenant");
+      return;
+    }
+    
     if (isCurrentlyMonitored) {
       // Remove from monitoring
       const monitored = monitoredCategories.find(m => m.category === categoryName);
