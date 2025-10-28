@@ -156,6 +156,30 @@ backend:
         agent: "testing"
         comment: "TESTED: Backup & Restore APIs working correctly. GET /api/backup/full returns JSON with 'collections' key containing users, tenants, m3u_playlists data. GET /api/backup/tenant/{id} returns tenant-specific data. Both restore endpoints exist and properly handle invalid data with 400 status. Super admin authentication enforced."
 
+  - task: "Categories API with source grouping"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated GET /api/categories endpoint to return categories with playlist_name for source grouping. Now returns array of objects {name, playlist_name} instead of simple string array. Maintains backward compatibility for monitoring functionality."
+
+  - task: "Tenant expiration logic"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Tenant model updated with expiration_date field. get_current_user function now checks expiration and blocks login for expired tenants. Tenant creation/update endpoints handle expiration_date. Existing tenants should be set to expire 12/1/2025."
+
 frontend:
   - task: "FFmpeg probe display with detailed modal"
     implemented: true
