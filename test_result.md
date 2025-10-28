@@ -158,27 +158,33 @@ backend:
 
   - task: "Categories API with source grouping"
     implemented: true
-    working: "NA"
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Updated GET /api/categories endpoint to return categories with playlist_name for source grouping. Now returns array of objects {name, playlist_name} instead of simple string array. Maintains backward compatibility for monitoring functionality."
+      - working: true
+        agent: "testing"
+        comment: "TESTED: Categories API working perfectly! ✅ Returns array of objects with 'name' and 'playlist_name' fields as specified. ✅ Categories are sorted by name. ✅ Source grouping information correctly included via playlist_name field. Tested with real M3U content containing Sports, News, and Entertainment categories. Response format matches v1.0.1 specification exactly."
 
   - task: "Tenant expiration logic"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "Tenant model updated with expiration_date field. get_current_user function now checks expiration and blocks login for expired tenants. Tenant creation/update endpoints handle expiration_date. Existing tenants should be set to expire 12/1/2025."
+      - working: false
+        agent: "testing"
+        comment: "TESTED: Tenant expiration logic PARTIALLY working with critical bug found. ✅ Tenant creation/update with expiration_date works correctly. ✅ Existing tokens are properly blocked when tenant expires (403 error). ❌ CRITICAL BUG: New login attempts are NOT blocked for expired tenants - /auth/login endpoint doesn't check tenant expiration before issuing new tokens. This is a security vulnerability that allows expired tenants to get new access tokens."
 
 frontend:
   - task: "FFmpeg probe display with detailed modal"
