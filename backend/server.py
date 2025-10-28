@@ -1044,12 +1044,20 @@ async def get_refresh_status(current_user: User = Depends(get_current_user)):
 
 @api_router.get("/channels/search", response_model=List[Channel])
 async def search_channels(q: str, current_user: User = Depends(get_current_user)):
-    """Search for channels across all playlists in user's tenant"""
-    if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    """Search for channels across all playlists in user's tenant (or all tenants for super admin)"""
     
-    # Get all playlists for the tenant
-    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    # Build query filter
+    if current_user.role == "super_admin":
+        # Super admin can search across all tenants
+        query_filter = {}
+    else:
+        # Regular users search within their tenant
+        if not current_user.tenant_id:
+            raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        query_filter = {"tenant_id": current_user.tenant_id}
+    
+    # Get playlists
+    playlists = await db.m3u_playlists.find(query_filter, {"_id": 0}).to_list(1000)
     
     all_channels = []
     search_query = q.lower()
