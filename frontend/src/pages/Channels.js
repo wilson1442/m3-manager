@@ -221,10 +221,9 @@ export default function Channels({ user, onLogout }) {
   };
 
   const handlePlay = (channel) => {
-    setCurrentStream(channel);
-    setPlayerOpen(true);
-    setPlayerError(null);
-    setPlayerReady(false);
+    // Open stream in new window/tab for better compatibility
+    window.open(channel.url, '_blank', 'noopener,noreferrer');
+    toast.success(`Opening ${channel.name} in new window`);
   };
 
   // HLS Player Setup with enhanced error handling and recovery
