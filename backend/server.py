@@ -744,12 +744,43 @@ async def get_tenants(current_user: User = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Only super admins can view all tenants")
     
     tenants = await db.tenants.find({}, {"_id": 0}).to_list(1000)
-    
     for tenant in tenants:
-        if isinstance(tenant['created_at'], str):
+        if tenant.get('created_at') and isinstance(tenant['created_at'], str):
             tenant['created_at'] = datetime.fromisoformat(tenant['created_at'])
-    
+        if tenant.get('expiration_date') and isinstance(tenant['expiration_date'], str):
+            tenant['expiration_date'] = datetime.fromisoformat(tenant['expiration_date'])
     return tenants
+
+@api_router.put("/tenants/{tenant_id}", response_model=Tenant)
+async def update_tenant(tenant_id: str, tenant_data: TenantUpdate, current_user: User = Depends(get_current_user)):
+    if current_user.role != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admins can update tenants")
+    
+    tenant = await db.tenants.find_one({"id": tenant_id}, {"_id": 0})
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Tenant not found")
+    
+    update_fields = {}
+    if tenant_data.name:
+        update_fields['name'] = tenant_data.name
+    
+    if tenant_data.expiration_date:
+        try:
+            expiration_date = datetime.strptime(tenant_data.expiration_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            update_fields['expiration_date'] = expiration_date.isoformat()
+        except:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
+    if update_fields:
+        await db.tenants.update_one({"id": tenant_id}, {"$set": update_fields})
+    
+    updated_tenant = await db.tenants.find_one({"id": tenant_id}, {"_id": 0})
+    if updated_tenant.get('created_at') and isinstance(updated_tenant['created_at'], str):
+        updated_tenant['created_at'] = datetime.fromisoformat(updated_tenant['created_at'])
+    if updated_tenant.get('expiration_date') and isinstance(updated_tenant['expiration_date'], str):
+        updated_tenant['expiration_date'] = datetime.fromisoformat(updated_tenant['expiration_date'])
+    
+    return Tenant(**updated_tenant)
 
 @api_router.get("/tenants/{tenant_id}", response_model=Tenant)
 async def get_tenant(tenant_id: str, current_user: User = Depends(get_current_user)):
