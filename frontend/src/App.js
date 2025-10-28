@@ -164,6 +164,10 @@ function App() {
             }
           />
           <Route
+            path="/player"
+            element={<Player />}
+          />
+          <Route
             path="/"
             element={
               isAuthenticated ? (
