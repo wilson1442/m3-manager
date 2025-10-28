@@ -267,14 +267,12 @@ metadata:
 
 test_plan:
   current_focus:
-    - "FFmpeg stream probing endpoint"
-    - "Profile image upload API"
-    - "Backup & Restore API"
-    - "FFmpeg probe display with detailed modal"
-    - "Profile image upload UI"
-    - "Backup & Restore page"
+    - "Categories API with source grouping"
+    - "Tenant expiration logic"
     - "HLS web player fixes"
-  stuck_tasks: []
+    - "Categories page grouping and filter"
+  stuck_tasks:
+    - "HLS web player fixes"
   test_all: false
   test_priority: "high_first"
 
