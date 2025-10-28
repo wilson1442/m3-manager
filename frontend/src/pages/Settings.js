@@ -968,6 +968,59 @@ export default function Settings({ user, onLogout }) {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* Dashboard Notes Tab */}
+          <TabsContent value="notes" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Dashboard Notes
+                </CardTitle>
+                <CardDescription>
+                  Create announcements or notes that will be displayed on all users' dashboards
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Content (HTML Editor)</Label>
+                  <ReactQuill 
+                    theme="snow" 
+                    value={dashboardNotes} 
+                    onChange={setDashboardNotes}
+                    modules={{
+                      toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'],
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link'],
+                        ['clean']
+                      ]
+                    }}
+                    style={{ height: '300px', marginBottom: '50px' }}
+                  />
+                </div>
+                <Button 
+                  onClick={handleSaveNotes}
+                  disabled={savingNotes}
+                  className="gap-2"
+                >
+                  {savingNotes ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  Save Notes
+                </Button>
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm border border-blue-200 dark:border-blue-800">
+                  <p className="text-blue-600 dark:text-blue-400">
+                    <strong>ℹ️ Note:</strong> These notes will be visible to all users on their dashboard. You can use the rich text editor to format your message with headers, lists, colors, and links.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
     </Layout>
