@@ -82,6 +82,10 @@ export default function Channels({ user, onLogout }) {
     }
   }, [channels, selectedPlaylist]);
 
+  const toggleSource = (source) => {
+    setCollapsedSources(prev => ({ ...prev, [source]: !prev[source] }));
+  };
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       toast.error("Please enter a search query");
