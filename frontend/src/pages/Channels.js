@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
-import { Search, Copy, Play, Radio, Loader2, Download, ChevronDown, ChevronRight, Image as ImageIcon, Filter } from "lucide-react";
+import { Search, Copy, Play, Radio, Loader2, Download, ChevronDown, ChevronRight, Image as ImageIcon, Filter, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
