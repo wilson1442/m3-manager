@@ -1569,17 +1569,6 @@ async def update_dashboard_notes(
     
     return {"message": "Notes updated successfully", "notes": notes_data}
 
-        return {
-            "message": f"Tenant '{tenant_data.get('tenant', {}).get('name')}' restored successfully",
-            "restored_counts": restored_counts,
-            "backup_date": backup_data.get("backup_date")
-        }
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error restoring tenant backup: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Restore failed: {str(e)}")
-
 # Scheduled Backup Management
 async def perform_scheduled_backup(schedule_id: str):
     """Execute a scheduled backup"""
