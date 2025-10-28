@@ -1076,24 +1076,37 @@ async def probe_channel_ffmpeg(url: str, current_user: User = Depends(get_curren
 
 @api_router.get("/categories")
 async def get_categories(current_user: User = Depends(get_current_user)):
-    """Get all unique categories from playlists in user's tenant"""
+    """Get all unique categories from playlists in user's tenant with source information"""
     if not current_user.tenant_id:
         raise HTTPException(status_code=400, detail="User must belong to a tenant")
     
     # Get all playlists for the tenant
     playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
     
-    categories = set()
+    # Use dict to track categories with their sources
+    categories_map = {}
     
     for playlist in playlists:
+        playlist_name = playlist.get('name', 'Unknown Source')
         if playlist.get('content'):
             channels = parse_m3u_content(playlist['content'])
             
             for channel in channels:
-                if channel.get('group'):
-                    categories.add(channel['group'])
+                category = channel.get('group')
+                if category:
+                    # Create unique key for each category-source combination
+                    key = f"{category}|{playlist_name}"
+                    if key not in categories_map:
+                        categories_map[key] = {
+                            "name": category,
+                            "playlist_name": playlist_name
+                        }
     
-    return sorted(list(categories))
+    # Convert to list and sort by category name
+    result = list(categories_map.values())
+    result.sort(key=lambda x: x['name'])
+    
+    return result
 
 @api_router.post("/categories/monitor", response_model=MonitoredCategory)
 async def add_monitored_category(category_data: MonitoredCategoryCreate, current_user: User = Depends(get_current_user)):
