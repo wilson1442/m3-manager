@@ -556,6 +556,183 @@ class M3UManagerAPITester:
         
         return False
 
+    def test_categories_api_with_source_grouping(self):
+        """Test Categories API with source grouping (v1.0.1 beta feature)"""
+        print("\n📂 Testing Categories API with Source Grouping (v1.0.1 Beta)...")
+        
+        if 'tenant_owner' not in self.tokens:
+            print("❌ Skipping - No tenant owner token available")
+            return False
+        
+        # Test GET /api/categories endpoint
+        success, response = self.run_test(
+            "Categories API with Source Grouping",
+            "GET",
+            "categories",
+            200,
+            token=self.tokens.get('tenant_owner'),
+            description="Get categories with playlist_name for source grouping"
+        )
+        
+        if success:
+            print(f"   Found {len(response)} categories")
+            
+            # Verify response format - should be array of objects with name and playlist_name
+            if isinstance(response, list):
+                print("   ✅ Response is an array")
+                
+                if len(response) > 0:
+                    # Check first category structure
+                    first_category = response[0]
+                    if isinstance(first_category, dict):
+                        print("   ✅ Categories are objects (not strings)")
+                        
+                        # Check required fields
+                        if 'name' in first_category and 'playlist_name' in first_category:
+                            print("   ✅ Categories have 'name' and 'playlist_name' fields")
+                            print(f"   Sample category: {first_category['name']} from {first_category['playlist_name']}")
+                            
+                            # Verify sorting by category name
+                            category_names = [cat['name'] for cat in response]
+                            sorted_names = sorted(category_names)
+                            if category_names == sorted_names:
+                                print("   ✅ Categories are sorted by name")
+                            else:
+                                print("   ⚠️ Categories may not be sorted by name")
+                            
+                            return True
+                        else:
+                            print("   ❌ Categories missing required fields 'name' or 'playlist_name'")
+                            print(f"   Category structure: {first_category}")
+                    else:
+                        print("   ❌ Categories are not objects (still strings?)")
+                        print(f"   First category type: {type(first_category)}")
+                        print(f"   First category: {first_category}")
+                else:
+                    print("   ⚠️ No categories found - cannot verify structure")
+                    return True  # Empty response is valid
+            else:
+                print("   ❌ Response is not an array")
+                print(f"   Response type: {type(response)}")
+                print(f"   Response: {response}")
+        
+        return False
+
+    def test_tenant_expiration_logic(self):
+        """Test Tenant expiration logic (v1.0.1 beta feature)"""
+        print("\n⏰ Testing Tenant Expiration Logic (v1.0.1 Beta)...")
+        
+        if 'super_admin' not in self.tokens:
+            print("❌ Skipping - No super admin token available")
+            return False
+        
+        # Test 1: Create tenant with expiration date
+        tenant_data = {
+            "name": f"Expiry Test Tenant {datetime.now().strftime('%H%M%S')}",
+            "owner_username": f"expiry_owner_{datetime.now().strftime('%H%M%S')}",
+            "owner_password": "ExpiryPass123!",
+            "expiration_date": "2025-12-01"  # Future date
+        }
+        
+        success, response = self.run_test(
+            "Create Tenant with Expiration Date",
+            "POST",
+            "tenants",
+            200,
+            data=tenant_data,
+            token=self.tokens.get('super_admin'),
+            description="Create tenant with expiration_date field"
+        )
+        
+        if success:
+            print(f"   ✅ Tenant created with expiration date")
+            expiry_tenant = response
+            expiry_owner_creds = {
+                "username": tenant_data["owner_username"],
+                "password": tenant_data["owner_password"]
+            }
+            
+            # Verify expiration_date field exists in response
+            if 'expiration_date' in response:
+                print(f"   ✅ Tenant has expiration_date field: {response['expiration_date']}")
+            else:
+                print(f"   ❌ Tenant missing expiration_date field")
+                return False
+            
+            # Test 2: Login with non-expired tenant (should work)
+            success_login, login_response = self.run_test(
+                "Login with Non-Expired Tenant",
+                "POST",
+                "auth/login",
+                200,
+                data=expiry_owner_creds,
+                description="Login with tenant that has future expiration date"
+            )
+            
+            if success_login:
+                print(f"   ✅ Login successful for non-expired tenant")
+                expiry_token = login_response.get('access_token')
+                
+                # Test 3: Update tenant to expired date
+                from datetime import datetime, timedelta
+                expired_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+                
+                update_success, update_response = self.run_test(
+                    "Update Tenant to Expired Date",
+                    "PUT",
+                    f"tenants/{expiry_tenant['id']}",
+                    200,
+                    data={"expiration_date": expired_date},
+                    token=self.tokens.get('super_admin'),
+                    description=f"Set tenant expiration to {expired_date} (past date)"
+                )
+                
+                if update_success:
+                    print(f"   ✅ Tenant expiration updated to {expired_date}")
+                    
+                    # Test 4: Try to login with expired tenant (should fail)
+                    success_expired, expired_response = self.run_test(
+                        "Login with Expired Tenant",
+                        "POST",
+                        "auth/login",
+                        403,  # Should be blocked with 403 Forbidden
+                        data=expiry_owner_creds,
+                        description="Login attempt with expired tenant (should fail)"
+                    )
+                    
+                    if success_expired:
+                        print(f"   ✅ Expired tenant login correctly blocked with 403")
+                        
+                        # Test 5: Verify existing token is also blocked
+                        if expiry_token:
+                            success_me, me_response = self.run_test(
+                                "Access with Expired Tenant Token",
+                                "GET",
+                                "auth/me",
+                                403,  # Should be blocked
+                                token=expiry_token,
+                                description="Try to access API with token from expired tenant"
+                            )
+                            
+                            if success_me:
+                                print(f"   ✅ Existing token from expired tenant correctly blocked")
+                                return True
+                            else:
+                                print(f"   ❌ Existing token from expired tenant not blocked properly")
+                        else:
+                            print(f"   ⚠️ No token to test existing session blocking")
+                            return True
+                    else:
+                        print(f"   ❌ Expired tenant login not blocked properly")
+                else:
+                    print(f"   ❌ Failed to update tenant expiration date")
+            else:
+                print(f"   ❌ Failed to login with non-expired tenant")
+        else:
+            print(f"   ❌ Failed to create tenant with expiration date")
+        
+        return False
+
     def test_delete_operations(self):
         """Test delete operations"""
         print("\n🗑️ Testing Delete Operations...")
