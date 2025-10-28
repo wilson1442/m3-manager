@@ -66,8 +66,15 @@ export default function Categories({ user, onLogout }) {
     ? categories
     : categories.filter(cat => cat.playlist_name === selectedPlaylist);
 
+  // Further filter by search query
+  const searchFilteredCategories = searchQuery.trim()
+    ? filteredCategories.filter(cat => 
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : filteredCategories;
+
   // Group categories by playlist source
-  const groupedCategories = filteredCategories.reduce((acc, category) => {
+  const groupedCategories = searchFilteredCategories.reduce((acc, category) => {
     const source = category.playlist_name || "Unknown Source";
     if (!acc[source]) {
       acc[source] = [];
