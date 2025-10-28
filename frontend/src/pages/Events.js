@@ -47,23 +47,50 @@ export default function Events({ user, onLogout }) {
       });
       
       setChannels(response.data);
-      
-      // Group channels by category
-      const grouped = {};
-      response.data.forEach(channel => {
-        const group = channel.group || "Uncategorized";
-        if (!grouped[group]) {
-          grouped[group] = [];
-        }
-        grouped[group].push(channel);
-      });
-      
-      setGroupedChannels(grouped);
     } catch (error) {
       toast.error("Failed to fetch monitored channels");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Filter channels by playlist
+  const filteredChannels = selectedPlaylist === "all"
+    ? channels
+    : channels.filter(ch => ch.playlist_name === selectedPlaylist);
+
+  // Further filter by search query
+  const searchFilteredChannels = searchQuery.trim()
+    ? filteredChannels.filter(ch => 
+        ch.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : filteredChannels;
+
+  // Group channels by category
+  const groupedChannels = searchFilteredChannels.reduce((acc, channel) => {
+    const category = channel.group || "Uncategorized";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(channel);
+    return acc;
+  }, {});
+
+  // Initialize all categories as collapsed
+  useEffect(() => {
+    const initialCollapsed = {};
+    Object.keys(groupedChannels).forEach(category => {
+      if (collapsedSources[category] === undefined) {
+        initialCollapsed[category] = true; // Collapsed by default
+      }
+    });
+    if (Object.keys(initialCollapsed).length > 0) {
+      setCollapsedSources(prev => ({ ...prev, ...initialCollapsed }));
+    }
+  }, [channels]);
+
+  const toggleCategory = (category) => {
+    setCollapsedSources(prev => ({ ...prev, [category]: !prev[category] }));
   };
 
   const handleCopyUrl = async (url) => {
