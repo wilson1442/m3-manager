@@ -227,6 +227,7 @@ export default function Categories({ user, onLogout }) {
                                   checked={monitored}
                                   onCheckedChange={() => handleToggle(category.name, monitored)}
                                   data-testid={`toggle-${index}`}
+                                  disabled={!user.tenant_id}
                                 />
                               </div>
                             </div>
