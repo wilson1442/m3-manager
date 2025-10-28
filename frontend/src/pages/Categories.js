@@ -59,6 +59,38 @@ export default function Categories({ user, onLogout }) {
     }
   };
 
+  // Filter categories by selected playlist
+  const filteredCategories = selectedPlaylist === "all"
+    ? categories
+    : categories.filter(cat => cat.playlist_name === selectedPlaylist);
+
+  // Group categories by playlist source
+  const groupedCategories = filteredCategories.reduce((acc, category) => {
+    const source = category.playlist_name || "Unknown Source";
+    if (!acc[source]) {
+      acc[source] = [];
+    }
+    acc[source].push(category);
+    return acc;
+  }, {});
+
+  // Initialize all sources as collapsed
+  useEffect(() => {
+    const initialCollapsed = {};
+    Object.keys(groupedCategories).forEach(source => {
+      if (collapsedSources[source] === undefined) {
+        initialCollapsed[source] = true;
+      }
+    });
+    if (Object.keys(initialCollapsed).length > 0) {
+      setCollapsedSources(prev => ({ ...prev, ...initialCollapsed }));
+    }
+  }, [categories]);
+
+  const toggleSource = (source) => {
+    setCollapsedSources(prev => ({ ...prev, [source]: !prev[source] }));
+  };
+
   const handleToggle = async (category, isCurrentlyMonitored) => {
     if (isCurrentlyMonitored) {
       // Remove from monitoring
