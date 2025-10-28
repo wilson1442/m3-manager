@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
@@ -12,8 +13,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { toast } from "sonner";
 import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon, RefreshCw, GitBranch, AlertTriangle, FileText, Save } from "lucide-react";
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
