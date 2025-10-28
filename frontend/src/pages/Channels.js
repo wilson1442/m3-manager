@@ -788,31 +788,33 @@ export default function Channels({ user, onLogout }) {
             </div>
             
             {playerReady && (
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => {
                     if (videoRef.current) {
-                      videoRef.current.play().catch(err => {
-                        toast.error("Failed to play: " + err.message);
-                      });
+                      if (videoRef.current.paused) {
+                        videoRef.current.play().catch(err => {
+                          toast.error("Failed to play: " + err.message);
+                        });
+                      } else {
+                        videoRef.current.pause();
+                      }
                     }
                   }}
                 >
-                  <Play className="h-4 w-4 mr-1" />
-                  Play
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (videoRef.current) {
-                      videoRef.current.pause();
-                    }
-                  }}
-                >
-                  Pause
+                  {videoRef.current?.paused ? (
+                    <>
+                      <Play className="h-4 w-4 mr-1" />
+                      Play
+                    </>
+                  ) : (
+                    <>
+                      <Pause className="h-4 w-4 mr-1" />
+                      Pause
+                    </>
+                  )}
                 </Button>
                 <Button
                   variant="outline"
@@ -824,8 +826,34 @@ export default function Channels({ user, onLogout }) {
                     }
                   }}
                 >
+                  <RotateCcw className="h-4 w-4 mr-1" />
                   Restart
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (videoRef.current) {
+                      videoRef.current.muted = !videoRef.current.muted;
+                      toast.info(videoRef.current.muted ? "Muted" : "Unmuted");
+                    }
+                  }}
+                >
+                  {videoRef.current?.muted ? (
+                    <>
+                      <VolumeX className="h-4 w-4 mr-1" />
+                      Unmute
+                    </>
+                  ) : (
+                    <>
+                      <Volume2 className="h-4 w-4 mr-1" />
+                      Mute
+                    </>
+                  )}
+                </Button>
+                <div className="ml-auto text-sm text-muted-foreground">
+                  Tip: Use video controls below for volume and fullscreen
+                </div>
               </div>
             )}
           </DialogContent>
