@@ -1567,7 +1567,16 @@ async def update_dashboard_notes(
     await db.dashboard_notes.delete_many({})
     await db.dashboard_notes.insert_one(notes_data)
     
-    return {"message": "Notes updated successfully", "notes": notes_data}
+    # Return without MongoDB _id
+    return {
+        "message": "Notes updated successfully", 
+        "notes": {
+            "id": notes_data["id"],
+            "content": notes_data["content"],
+            "updated_by": notes_data["updated_by"],
+            "updated_at": notes_data["updated_at"]
+        }
+    }
 
 # Scheduled Backup Management
 async def perform_scheduled_backup(schedule_id: str):
