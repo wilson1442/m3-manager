@@ -122,12 +122,7 @@ export default function Events({ user, onLogout }) {
     toast.success(`Opening ${channel.name} in player window`);
   };
 
-  const toggleCategory = (category) => {
-    setOpenCategories(prev => ({
-      ...prev,
-      [category]: !prev[category]
-    }));
-  };
+  // toggleCategory function is defined above (line 92-94)
 
   return (
     <Layout user={user} onLogout={onLogout} currentPage="events">
