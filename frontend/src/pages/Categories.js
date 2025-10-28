@@ -20,6 +20,7 @@ export default function Categories({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [playlists, setPlaylists] = useState([]);
   const [selectedPlaylist, setSelectedPlaylist] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [collapsedSources, setCollapsedSources] = useState({});
 
   const token = localStorage.getItem("token");
