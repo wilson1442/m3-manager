@@ -649,6 +649,7 @@ export default function Channels({ user, onLogout }) {
                                 {channel.group && (
                                   <p className="text-xs text-muted-foreground line-clamp-1">{channel.group}</p>
                                 )}
+                                <p className="text-xs font-mono text-muted-foreground mt-1 break-all">{channel.url}</p>
                               </div>
 
                               {channelStatus[channel.url] && (
