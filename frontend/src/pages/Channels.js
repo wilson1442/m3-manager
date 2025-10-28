@@ -55,33 +55,6 @@ export default function Channels({ user, onLogout }) {
     }
   };
 
-  // Group channels by playlist source
-  const groupedChannels = channels.reduce((acc, channel) => {
-    const source = channel.playlist_name || "Unknown Source";
-    if (!acc[source]) {
-      acc[source] = [];
-    }
-    acc[source].push(channel);
-    return acc;
-  }, {});
-
-  // Initialize all sources as collapsed
-  useEffect(() => {
-    const initialCollapsed = {};
-    Object.keys(groupedChannels).forEach(source => {
-      if (collapsedSources[source] === undefined) {
-        initialCollapsed[source] = true;
-      }
-    });
-    if (Object.keys(initialCollapsed).length > 0) {
-      setCollapsedSources(prev => ({ ...prev, ...initialCollapsed }));
-    }
-  }, [channels]);
-
-  const toggleSource = (source) => {
-    setCollapsedSources(prev => ({ ...prev, [source]: !prev[source] }));
-  };
-
   // Filter channels by selected playlist
   const filteredChannels = selectedPlaylist === "all" 
     ? channels 
@@ -95,6 +68,19 @@ export default function Channels({ user, onLogout }) {
     acc[source].push(channel);
     return acc;
   }, {});
+
+  // Initialize all sources as collapsed based on filtered results
+  useEffect(() => {
+    const initialCollapsed = {};
+    Object.keys(filteredGroupedChannels).forEach(source => {
+      if (collapsedSources[source] === undefined) {
+        initialCollapsed[source] = true;
+      }
+    });
+    if (Object.keys(initialCollapsed).length > 0) {
+      setCollapsedSources(prev => ({ ...prev, ...initialCollapsed }));
+    }
+  }, [channels, selectedPlaylist]);
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
