@@ -80,6 +80,7 @@ export default function Settings({ user, onLogout }) {
     loadSchedules();
     loadBackupFiles();
     loadSystemSettings();
+    loadDashboardNotes();
   }, []);
 
   const loadTenants = async () => {
