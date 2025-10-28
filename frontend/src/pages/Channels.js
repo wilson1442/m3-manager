@@ -154,7 +154,20 @@ export default function Channels({ user, onLogout }) {
       await navigator.clipboard.writeText(logoUrl);
       toast.success("Logo URL copied!");
     } catch (error) {
-      toast.error("Failed to copy logo URL");
+      // Fallback for older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = logoUrl;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast.success("Logo URL copied!");
+      } catch (err) {
+        toast.error("Failed to copy logo URL");
+      }
+      document.body.removeChild(textArea);
     }
   };
 
