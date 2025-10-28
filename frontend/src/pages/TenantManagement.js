@@ -164,6 +164,47 @@ export default function TenantManagement({ user, onLogout }) {
           </Dialog>
         </div>
 
+        {/* Edit Tenant Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Tenant</DialogTitle>
+              <DialogDescription>Update tenant information and expiration date</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdate} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit_name">Tenant Name</Label>
+                <Input
+                  id="edit_name"
+                  value={editFormData.name}
+                  onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_expiration_date">Expiration Date</Label>
+                <Input
+                  id="edit_expiration_date"
+                  type="date"
+                  value={editFormData.expiration_date}
+                  onChange={(e) => setEditFormData({ ...editFormData, expiration_date: e.target.value })}
+                  required
+                />
+                <p className="text-xs text-muted-foreground">Tenant access will expire on this date</p>
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+                  Cancel
+                </Button>
+                <Button type="submit" className="flex-1">
+                  Update Tenant
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+
         {loading ? (
           <div className="text-center py-12">Loading tenants...</div>
         ) : tenants.length === 0 ? (
