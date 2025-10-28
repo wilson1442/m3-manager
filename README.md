@@ -362,10 +362,7 @@ For issues, questions, or feature requests:
 
 Future planned features:
 - [ ] EPG (Electronic Program Guide) support
-- [ ] Recording and DVR functionality
 - [ ] Advanced playlist editor
-- [ ] Multi-language support
-- [ ] Mobile app companion
 - [ ] Advanced analytics and usage statistics
 - [ ] API key management for external access
 - [ ] Webhook notifications
