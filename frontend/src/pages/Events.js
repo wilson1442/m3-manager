@@ -16,23 +16,28 @@ const API = `${BACKEND_URL}/api`;
 export default function Events({ user, onLogout }) {
   const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [groupedChannels, setGroupedChannels] = useState({});
-  const [openCategories, setOpenCategories] = useState({});
+  const [playlists, setPlaylists] = useState([]);
+  const [selectedPlaylist, setSelectedPlaylist] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [collapsedSources, setCollapsedSources] = useState({});
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchChannels();
+    loadPlaylists();
   }, []);
 
-  useEffect(() => {
-    // Auto-open all categories by default
-    const allOpen = {};
-    Object.keys(groupedChannels).forEach(category => {
-      allOpen[category] = true;
-    });
-    setOpenCategories(allOpen);
-  }, [groupedChannels]);
+  const loadPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/m3u`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error("Failed to load playlists:", error);
+    }
+  };
 
   const fetchChannels = async () => {
     setLoading(true);
