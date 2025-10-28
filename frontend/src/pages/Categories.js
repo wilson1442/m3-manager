@@ -25,7 +25,19 @@ export default function Categories({ user, onLogout }) {
 
   useEffect(() => {
     fetchData();
+    loadPlaylists();
   }, []);
+
+  const loadPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/m3u`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error("Failed to load playlists:", error);
+    }
+  };
 
   const fetchData = async () => {
     try {
