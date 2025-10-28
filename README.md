@@ -268,7 +268,39 @@ If you can access locally but not through Cloudflare:
 
 ## 📝 Version History
 
-### Version 1.0.0 (Current) - January 2025
+### Version 1.1.0 (Current) - October 2025
+
+**Production Release**
+
+**New Features:**
+- Dashboard Notes system with HTML support for super admins
+- Enhanced search and filtering on Categories and Events pages
+- Free-form text search with real-time filtering
+- Tenant expiration date management with visual indicators
+- Edit tenant expiration dates from admin panel
+- Collapsible category groups by source
+- Logo size improvements (120x80px max)
+
+**UI/UX Improvements:**
+- HTML textarea editor with live preview for dashboard notes
+- Dual filtering system (dropdown + text search)
+- Result counters for filtered items
+- Status badges for tenant expiration (Active/Expired)
+- Improved channel result grouping by source
+
+**Security:**
+- Tenant expiration check at login
+- Expired tenants blocked from obtaining new tokens
+- Clear 403 error messages for expired accounts
+
+**Bug Fixes:**
+- Fixed channel search parameter mismatch
+- Fixed search results showing only single playlist
+- Fixed React rendering errors with validation messages
+- Fixed super admin access to categories without tenant
+- Fixed MongoDB ObjectId serialization issues
+
+### Version 1.0.0 - January 2025
 
 **Initial Release**
 
