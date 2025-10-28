@@ -116,28 +116,106 @@ export default function Dashboard({ user, onLogout }) {
           <p className="text-base text-muted-foreground">Manage your M3U playlists and settings</p>
         </div>
 
-        {/* Dashboard Notes */}
-        {!loadingNotes && notes && notes.content && (
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <CardTitle>Administrator Notes</CardTitle>
+        {/* Two Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Notes */}
+          <div className="lg:col-span-1">
+            {!loadingNotes && notes && notes.content && (
+              <Card className="h-full">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-primary" />
+                    <CardTitle>Administrator Notes</CardTitle>
+                  </div>
+                  {notes.updated_at && (
+                    <CardDescription>
+                      Last updated by {notes.updated_by} on {new Date(notes.updated_at).toLocaleString()}
+                    </CardDescription>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div 
+                    className="prose prose-sm dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: notes.content }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Right Column - Player API Status */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Player API Status Cards */}
+            {!loadingPlaylists && playlists.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-bold mb-4">Playlist Status</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playlists.map((playlist) => (
+                    <Card key={playlist.id}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">{playlist.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        {playlist.player_api_url ? (
+                          <>
+                            {playlist.player_api_data ? (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground">Status</span>
+                                  <Badge variant={playlist.player_api_data.status === "Active" ? "default" : "secondary"}>
+                                    {playlist.player_api_data.status === "Active" ? (
+                                      <><Wifi className="h-3 w-3 mr-1" />Active</>
+                                    ) : (
+                                      <><WifiOff className="h-3 w-3 mr-1" />Inactive</>
+                                    )}
+                                  </Badge>
+                                </div>
+                                
+                                {playlist.player_api_data.active_cons !== undefined && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">Connections</span>
+                                    <span className="font-medium">
+                                      {playlist.player_api_data.active_cons} / {playlist.player_api_data.max_connections}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {playlist.player_api_data.exp_date && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                      <Calendar className="h-3 w-3" />
+                                      Expires
+                                    </span>
+                                    <span className="font-medium text-sm">
+                                      {new Date(playlist.player_api_data.exp_date * 1000).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {playlist.player_api_data.created_at && (
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-sm text-muted-foreground">Created</span>
+                                    <span className="text-sm">
+                                      {new Date(playlist.player_api_data.created_at * 1000).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">No API data available</p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">No Player API configured</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-              {notes.updated_at && (
-                <CardDescription>
-                  Last updated by {notes.updated_by} on {new Date(notes.updated_at).toLocaleString()}
-                </CardDescription>
-              )}
-            </CardHeader>
-            <CardContent>
-              <div 
-                className="prose prose-sm dark:prose-invert max-w-none"
-                dangerouslySetInnerHTML={{ __html: notes.content }}
-              />
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {stats.map((stat, index) => (
