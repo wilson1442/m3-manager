@@ -114,6 +114,14 @@ export default function Events({ user, onLogout }) {
     }
   };
 
+  const handlePlay = (channel) => {
+    // Open player in a popup window
+    const playerUrl = `/player?url=${encodeURIComponent(channel.url)}&name=${encodeURIComponent(channel.name)}`;
+    const windowFeatures = 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no';
+    window.open(playerUrl, `player_${Date.now()}`, windowFeatures);
+    toast.success(`Opening ${channel.name} in player window`);
+  };
+
   const toggleCategory = (category) => {
     setOpenCategories(prev => ({
       ...prev,
