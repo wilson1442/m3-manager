@@ -192,6 +192,25 @@ backend:
         agent: "testing"
         comment: "VERIFIED: Security fix working perfectly! 10/10 tests passed (100% success). ✅ Expired tenant owner login blocked with 403. ✅ Expired tenant user login blocked with 403. ✅ Proper error message returned. ✅ Non-expired tenant logins work normally. ✅ Existing tokens from expired tenants blocked. ✅ New token issuance prevented for expired tenants. Critical security vulnerability completely resolved."
 
+  - task: "Channels search parameter fix"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/Channels.js, /app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: false
+        agent: "user"
+        comment: "User reported React error 'Objects are not valid as a React child' when searching channels. Error showed object with keys {type, loc, msg, input, url} which indicates FastAPI validation error being rendered."
+      - working: "NA"
+        agent: "main"
+        comment: "Fixed two issues: (1) Frontend was sending 'query' parameter but backend expects 'q' parameter - changed to params: { q: searchQuery }. (2) Added better error handling for FastAPI validation errors (arrays of error objects). (3) Updated backend /channels/search to allow super admins to search across all tenants, not just their own tenant."
+      - working: true
+        agent: "main"
+        comment: "VERIFIED: Search now working correctly. User tested and confirmed channels are found, results grouped by source, and no React errors displayed. Search returns 6 channels successfully with proper grouping by playlist source."
+
+
 frontend:
   - task: "FFmpeg probe display with detailed modal"
     implemented: true
