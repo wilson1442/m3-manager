@@ -69,6 +69,30 @@ export default function TenantManagement({ user, onLogout }) {
     }
   };
 
+  const handleEdit = (tenant) => {
+    setEditingTenant(tenant);
+    setEditFormData({
+      name: tenant.name,
+      expiration_date: tenant.expiration_date ? new Date(tenant.expiration_date).toISOString().split('T')[0] : ""
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API}/tenants/${editingTenant.id}`, editFormData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Tenant updated successfully!");
+      setIsEditDialogOpen(false);
+      setEditingTenant(null);
+      fetchTenants();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update tenant");
+    }
+  };
+
   return (
     <Layout user={user} onLogout={onLogout} currentPage="tenants">
       <div className="space-y-6" data-testid="tenant-management-page">
