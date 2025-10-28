@@ -582,6 +582,17 @@ class SystemSettingsUpdate(BaseModel):
     production_repo_url: Optional[str] = None
     beta_repo_url: Optional[str] = None
 
+
+class DashboardNotes(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    content: str  # HTML content
+    updated_by: str
+    updated_at: datetime
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class DashboardNotesUpdate(BaseModel):
+    content: str
+
 # Backup directory setup
 BACKUP_DIR = ROOT_DIR / "backups"
 BACKUP_DIR.mkdir(exist_ok=True)
