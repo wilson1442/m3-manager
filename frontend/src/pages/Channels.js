@@ -221,9 +221,11 @@ export default function Channels({ user, onLogout }) {
   };
 
   const handlePlay = (channel) => {
-    // Open stream in new window/tab for better compatibility
-    window.open(channel.url, '_blank', 'noopener,noreferrer');
-    toast.success(`Opening ${channel.name} in new window`);
+    // Open player in a popup window
+    const playerUrl = `/player?url=${encodeURIComponent(channel.url)}&name=${encodeURIComponent(channel.name)}`;
+    const windowFeatures = 'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no';
+    window.open(playerUrl, `player_${Date.now()}`, windowFeatures);
+    toast.success(`Opening ${channel.name} in player window`);
   };
 
   // HLS Player Setup with enhanced error handling and recovery
