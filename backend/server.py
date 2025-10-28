@@ -668,6 +668,16 @@ async def login(login_data: UserLogin):
     if not verify_password(login_data.password, user_doc['password']):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
+    # Check tenant expiration before issuing token
+    if user_doc.get('tenant_id'):
+        tenant = await db.tenants.find_one({"id": user_doc['tenant_id']}, {"_id": 0})
+        if tenant and tenant.get('expiration_date'):
+            expiration = tenant['expiration_date']
+            if isinstance(expiration, str):
+                expiration = datetime.fromisoformat(expiration)
+            if expiration < datetime.now(timezone.utc):
+                raise HTTPException(status_code=403, detail="Tenant subscription has expired. Please contact your administrator.")
+    
     if isinstance(user_doc['created_at'], str):
         user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
     
