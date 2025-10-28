@@ -652,17 +652,34 @@ export default function Channels({ user, onLogout }) {
                               </div>
 
                               {channelStatus[channel.url] && (
-                                <div className="text-xs">
+                                <div className="text-xs space-y-1">
                                   <div className="flex items-center gap-1">
                                     <Radio className={`h-3 w-3 ${channelStatus[channel.url].online ? 'text-green-500' : 'text-red-500'}`} />
-                                    <span className={channelStatus[channel.url].online ? 'text-green-600' : 'text-red-600'}>
+                                    <span className={channelStatus[channel.url].online ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
                                       {channelStatus[channel.url].online ? 'Online' : channelStatus[channel.url].status}
                                     </span>
                                   </div>
-                                  {ffmpegProbeData[channel.url]?.video_resolution && (
-                                    <p className="text-muted-foreground mt-1">
-                                      {ffmpegProbeData[channel.url].video_resolution} • {ffmpegProbeData[channel.url].bitrate}
-                                    </p>
+                                  {ffmpegProbeData[channel.url] && (
+                                    <div className="text-muted-foreground space-y-0.5">
+                                      {ffmpegProbeData[channel.url].format && (
+                                        <p>Format: {ffmpegProbeData[channel.url].format}</p>
+                                      )}
+                                      {ffmpegProbeData[channel.url].video_resolution && (
+                                        <p>Resolution: {ffmpegProbeData[channel.url].video_resolution}</p>
+                                      )}
+                                      {ffmpegProbeData[channel.url].video_codec && (
+                                        <p>Video: {ffmpegProbeData[channel.url].video_codec}</p>
+                                      )}
+                                      {ffmpegProbeData[channel.url].audio_codec && (
+                                        <p>Audio: {ffmpegProbeData[channel.url].audio_codec}</p>
+                                      )}
+                                      {ffmpegProbeData[channel.url].bitrate && (
+                                        <p>Bitrate: {ffmpegProbeData[channel.url].bitrate}</p>
+                                      )}
+                                      {ffmpegProbeData[channel.url].video_fps && (
+                                        <p>FPS: {ffmpegProbeData[channel.url].video_fps}</p>
+                                      )}
+                                    </div>
                                   )}
                                 </div>
                               )}
