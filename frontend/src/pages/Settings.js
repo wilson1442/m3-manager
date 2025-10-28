@@ -127,6 +127,36 @@ export default function Settings({ user, onLogout }) {
     }
   };
 
+  const loadDashboardNotes = async () => {
+    try {
+      const response = await axios.get(`${API}/dashboard/notes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDashboardNotes(response.data.content || "");
+    } catch (error) {
+      console.error("Failed to load dashboard notes:", error);
+    }
+  };
+
+  const handleSaveNotes = async () => {
+    setSavingNotes(true);
+    try {
+      await axios.put(
+        `${API}/dashboard/notes`,
+        { content: dashboardNotes },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast.success("Dashboard notes updated successfully!");
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to update notes");
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
+
   const handleUpdateSystemSettings = async () => {
     try {
       await axios.put(
