@@ -290,12 +290,6 @@ export default function M3UManagement({ user, onLogout }) {
                   )}
                 </CardHeader>
                 <CardContent>
-                  {playlist.content && (
-                    <div className="mb-4">
-                      <p className="text-sm text-muted-foreground line-clamp-3">{playlist.content}</p>
-                    </div>
-                  )}
-                  
                   {playlist.player_api && (
                     <div className="mb-4 p-3 bg-muted/50 rounded-md space-y-2">
                       <div className="flex items-center justify-between">
