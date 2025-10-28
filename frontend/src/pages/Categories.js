@@ -91,15 +91,15 @@ export default function Categories({ user, onLogout }) {
     setCollapsedSources(prev => ({ ...prev, [source]: !prev[source] }));
   };
 
-  const handleToggle = async (category, isCurrentlyMonitored) => {
+  const handleToggle = async (categoryName, isCurrentlyMonitored) => {
     if (isCurrentlyMonitored) {
       // Remove from monitoring
-      const monitored = monitoredCategories.find(m => m.category === category);
+      const monitored = monitoredCategories.find(m => m.category === categoryName);
       try {
         await axios.delete(`${API}/categories/monitor/${monitored.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        toast.success(`Stopped monitoring "${category}"`);
+        toast.success(`Stopped monitoring "${categoryName}"`);
         fetchData();
       } catch (error) {
         toast.error("Failed to remove category");
@@ -109,12 +109,12 @@ export default function Categories({ user, onLogout }) {
       try {
         await axios.post(
           `${API}/categories/monitor`,
-          { category },
+          { category: categoryName },
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        toast.success(`Now monitoring "${category}"`);
+        toast.success(`Now monitoring "${categoryName}"`);
         fetchData();
       } catch (error) {
         toast.error(error.response?.data?.detail || "Failed to add category");
