@@ -228,11 +228,11 @@ frontend:
   
   - task: "HLS web player fixes"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/frontend/src/pages/Channels.js"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: false
         agent: "user"
@@ -243,6 +243,21 @@ frontend:
       - working: false
         agent: "testing"
         comment: "TESTED: HLS player UI improvements are implemented correctly with all required elements (video element, manual controls, loading states). However, cannot fully test player functionality due to channel search API returning 400 errors - no channels available to test streaming. The UI components and player dialog are properly implemented but actual streaming cannot be verified without working channel data."
+      - working: "NA"
+        agent: "main"
+        comment: "COMPLETE HLS PLAYER REWRITE v1.0.1: (1) Enhanced HLS.js config with increased timeouts (20-30s), retry attempts (4-6 retries), better buffer settings. (2) Comprehensive error recovery: 3 retry attempts for network errors, media error recovery with audio codec swap, detailed error messages for each error type. (3) Improved autoplay handling: tries unmuted first, falls back to muted for browser policies, shows helpful toast messages. (4) Enhanced logging: emoji-based console logs for easy debugging, tracks all HLS events. (5) Better controls: Play/Pause toggle button, Restart button, Mute/Unmute toggle, all with proper state management. (6) Native HLS support for Safari with proper error codes. (7) Proper cleanup on dialog close and component unmount. Ready for thorough testing."
+
+  - task: "Categories page grouping and filter"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/Categories.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Complete redesign: (1) Added playlist filter dropdown (same as Channels page), (2) Group categories by source (playlist_name) in collapsible cards, (3) All sources collapsed by default, (4) Shows category count and monitored count per source, (5) Preserved all monitoring toggle functionality, (6) Updated to work with new backend API response format {name, playlist_name}. UI matches Channels page layout pattern."
 
 metadata:
   created_by: "main_agent"
