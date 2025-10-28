@@ -635,7 +635,7 @@ export default function Channels({ user, onLogout }) {
                                 <img 
                                   src={channel.logo} 
                                   alt={channel.name}
-                                  className="w-full h-full object-contain p-2"
+                                  className="max-w-[120px] max-h-[80px] object-contain p-2"
                                   onError={(e) => {
                                     e.target.style.display = 'none';
                                     e.target.parentElement.innerHTML = `<div class="flex items-center justify-center w-full h-full"><span class="text-4xl text-muted-foreground">📺</span></div>`;
