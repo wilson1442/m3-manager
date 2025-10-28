@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import dynamic from 'next/dynamic';
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
 import { toast } from "sonner";
-import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon, RefreshCw, GitBranch, AlertTriangle } from "lucide-react";
+import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon, RefreshCw, GitBranch, AlertTriangle, FileText, Save } from "lucide-react";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
