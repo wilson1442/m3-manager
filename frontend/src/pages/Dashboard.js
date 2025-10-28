@@ -3,8 +3,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ListMusic, Building2, Activity, FileText } from "lucide-react";
+import { Users, ListMusic, Building2, Activity, FileText, Wifi, WifiOff, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -13,10 +14,13 @@ export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate();
   const [notes, setNotes] = useState(null);
   const [loadingNotes, setLoadingNotes] = useState(true);
+  const [playlists, setPlaylists] = useState([]);
+  const [loadingPlaylists, setLoadingPlaylists] = useState(true);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchNotes();
+    fetchPlaylists();
   }, []);
 
   const fetchNotes = async () => {
@@ -29,6 +33,19 @@ export default function Dashboard({ user, onLogout }) {
       console.error("Failed to fetch notes:", error);
     } finally {
       setLoadingNotes(false);
+    }
+  };
+
+  const fetchPlaylists = async () => {
+    try {
+      const response = await axios.get(`${API}/m3u`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error("Failed to fetch playlists:", error);
+    } finally {
+      setLoadingPlaylists(false);
     }
   };
 
