@@ -1094,12 +1094,20 @@ async def probe_channel_ffmpeg(url: str, current_user: User = Depends(get_curren
 
 @api_router.get("/categories")
 async def get_categories(current_user: User = Depends(get_current_user)):
-    """Get all unique categories from playlists in user's tenant with source information"""
-    if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="User must belong to a tenant")
+    """Get all unique categories from playlists in user's tenant (or all tenants for super admin) with source information"""
     
-    # Get all playlists for the tenant
-    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    # Build query filter
+    if current_user.role == "super_admin":
+        # Super admin can view categories across all tenants
+        query_filter = {}
+    else:
+        # Regular users view categories within their tenant
+        if not current_user.tenant_id:
+            raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        query_filter = {"tenant_id": current_user.tenant_id}
+    
+    # Get all playlists
+    playlists = await db.m3u_playlists.find(query_filter, {"_id": 0}).to_list(1000)
     
     # Use dict to track categories with their sources
     categories_map = {}
