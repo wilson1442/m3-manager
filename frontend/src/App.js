@@ -11,6 +11,7 @@ import Channels from "@/pages/Channels";
 import Categories from "@/pages/Categories";
 import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
+import Player from "@/pages/Player";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
