@@ -106,7 +106,7 @@ export default function Channels({ user, onLogout }) {
     try {
       const response = await axios.get(`${API}/channels/search`, {
         headers: { Authorization: `Bearer ${token}` },
-        params: { query: searchQuery },
+        params: { q: searchQuery },
       });
       setChannels(response.data);
       if (response.data.length === 0) {
@@ -115,7 +115,14 @@ export default function Channels({ user, onLogout }) {
         toast.success(`Found ${response.data.length} channels`);
       }
     } catch (error) {
-      toast.error(error.response?.data?.detail || "Failed to search channels");
+      console.error("Search error:", error);
+      const errorMsg = error.response?.data?.detail;
+      // Handle FastAPI validation errors (arrays of error objects)
+      if (Array.isArray(errorMsg)) {
+        toast.error(errorMsg.map(e => e.msg).join(', ') || "Failed to search channels");
+      } else {
+        toast.error(errorMsg || "Failed to search channels");
+      }
     } finally {
       setLoading(false);
     }
