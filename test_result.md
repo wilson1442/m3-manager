@@ -309,7 +309,7 @@ test_plan:
     - "HLS web player fixes"
     - "Categories page grouping and filter"
   stuck_tasks:
-    - "HLS web player fixes"
+    - "Categories page grouping and filter"
   test_all: false
   test_priority: "high_first"
 
@@ -328,3 +328,5 @@ agent_communication:
     message: "V1.0.1 BETA TESTING COMPLETE: (1) ✅ CATEGORIES API: Working perfectly - returns array of objects with name/playlist_name, sorted correctly, source grouping implemented as specified. (2) ❌ TENANT EXPIRATION: Critical security bug found - existing tokens blocked correctly but NEW LOGIN attempts not blocked for expired tenants. The /auth/login endpoint missing expiration check before issuing tokens. This allows expired tenants to get fresh access tokens. REQUIRES IMMEDIATE FIX."
   - agent: "testing"
     message: "TENANT EXPIRATION SECURITY FIX RE-TESTING COMPLETE: ✅ CRITICAL SECURITY VULNERABILITY RESOLVED! Comprehensive testing performed with focused test suite specifically for the tenant expiration login fix. All 10 tests passed (100% success rate). The /auth/login endpoint now properly checks tenant expiration before issuing tokens. Both tenant owners and regular users in expired tenants are blocked with 403 Forbidden status and appropriate error message. Non-expired tenants continue to work normally. The security fix is working correctly and the vulnerability is closed."
+  - agent: "testing"
+    message: "V1.0.1 BETA FEATURES TESTING COMPLETE: ✅ CHANNELS SEARCH FIX: Working perfectly - search returns 6 channels without React errors, results grouped by source (Mayhem, Working Test Streams, MSS Portal Test, MSS Portal Live Test), sources collapsed by default with chevron expand/collapse, filter dropdown with 'All Playlists' option, Select All and Export buttons functional. ✅ HLS PLAYER IMPROVEMENTS: All new controls implemented (Play/Pause toggle, Restart, Mute/Unmute), enhanced HLS.js configuration, proper dialog handling, video element present, loading states working. ❌ CATEGORIES PAGE: Backend API errors prevent testing - /api/categories and /api/categories/monitor returning 400 Bad Request. UI redesign implemented but cannot display categories. ✅ REGRESSION: Dashboard, Profile, Settings pages load correctly. CRITICAL ISSUE: Categories API needs backend fix."
