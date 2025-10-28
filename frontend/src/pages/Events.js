@@ -233,7 +233,7 @@ export default function Events({ user, onLogout }) {
                                   </Button>
                                   <Button
                                     size="sm"
-                                    onClick={() => window.open(channel.url, '_blank')}
+                                    onClick={() => handlePlay(channel)}
                                     data-testid={`play-${category}-${index}`}
                                   >
                                     <Play className="h-3 w-3 mr-1" />
