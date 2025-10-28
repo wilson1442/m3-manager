@@ -674,7 +674,7 @@ class M3UManagerAPITester:
                 expiry_token = login_response.get('access_token')
                 
                 # Test 3: Update tenant to expired date
-                from datetime import datetime, timedelta
+                from datetime import timedelta
                 expired_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
                 
                 update_success, update_response = self.run_test(
