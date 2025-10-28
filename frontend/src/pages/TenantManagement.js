@@ -160,13 +160,42 @@ export default function TenantManagement({ user, onLogout }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tenants.map((tenant) => (
-                    <TableRow key={tenant.id} data-testid={`tenant-row-${tenant.id}`}>
-                      <TableCell className="font-medium">{tenant.name}</TableCell>
-                      <TableCell className="font-mono text-sm text-muted-foreground">{tenant.owner_id}</TableCell>
-                      <TableCell>{new Date(tenant.created_at).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
+                  {tenants.map((tenant) => {
+                    const expirationDate = tenant.expiration_date ? new Date(tenant.expiration_date) : null;
+                    const isExpired = expirationDate && expirationDate < new Date();
+                    
+                    return (
+                      <TableRow key={tenant.id} data-testid={`tenant-row-${tenant.id}`}>
+                        <TableCell className="font-medium">{tenant.name}</TableCell>
+                        <TableCell className="font-mono text-sm text-muted-foreground">{tenant.owner_id}</TableCell>
+                        <TableCell>
+                          {expirationDate ? (
+                            <span className={isExpired ? "text-red-600 font-medium" : ""}>
+                              {expirationDate.toLocaleDateString()}
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground">No expiration</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {isExpired ? (
+                            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                              Expired
+                            </span>
+                          ) : expirationDate ? (
+                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                              No Expiration
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{new Date(tenant.created_at).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </CardContent>
