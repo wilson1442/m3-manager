@@ -467,6 +467,7 @@ export default function Settings({ user, onLogout }) {
             <TabsTrigger value="scheduled">Scheduled Backups</TabsTrigger>
             <TabsTrigger value="files">Backup Files</TabsTrigger>
             <TabsTrigger value="updates">System Updates</TabsTrigger>
+            <TabsTrigger value="notes">Dashboard Notes</TabsTrigger>
           </TabsList>
 
           {/* Manual Backup & Restore Tab */}
