@@ -137,7 +137,11 @@ export default function Categories({ user, onLogout }) {
       <div className="space-y-6" data-testid="categories-page">
         <div>
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-2">Categories</h1>
-          <p className="text-base text-muted-foreground">Toggle categories to monitor on Events page</p>
+          <p className="text-base text-muted-foreground">
+            {user.tenant_id 
+              ? "Toggle categories to monitor on Events page" 
+              : "View all categories (monitoring is only available for tenant users)"}
+          </p>
         </div>
 
         {/* Filter */}
