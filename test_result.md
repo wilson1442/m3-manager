@@ -173,11 +173,11 @@ backend:
 
   - task: "Tenant expiration logic"
     implemented: true
-    working: false
+    working: "NA"
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: "NA"
         agent: "main"
@@ -185,6 +185,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "TESTED: Tenant expiration logic PARTIALLY working with critical bug found. ✅ Tenant creation/update with expiration_date works correctly. ✅ Existing tokens are properly blocked when tenant expires (403 error). ❌ CRITICAL BUG: New login attempts are NOT blocked for expired tenants - /auth/login endpoint doesn't check tenant expiration before issuing new tokens. This is a security vulnerability that allows expired tenants to get new access tokens."
+      - working: "NA"
+        agent: "main"
+        comment: "FIXED: Added tenant expiration check in /auth/login endpoint (lines 674-681). Now checks tenant expiration_date before issuing access tokens. Returns 403 with message 'Tenant subscription has expired. Please contact your administrator.' for expired tenants. This closes the security vulnerability where expired tenants could obtain fresh tokens."
 
 frontend:
   - task: "FFmpeg probe display with detailed modal"
