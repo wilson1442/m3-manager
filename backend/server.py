@@ -452,6 +452,7 @@ class Tenant(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     owner_id: str
+    expiration_date: Optional[datetime] = Field(default_factory=lambda: datetime(2025, 12, 1, tzinfo=timezone.utc))
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str
 
@@ -459,6 +460,11 @@ class TenantCreate(BaseModel):
     name: str
     owner_username: str
     owner_password: str
+    expiration_date: Optional[str] = None  # Format: "YYYY-MM-DD"
+
+class TenantUpdate(BaseModel):
+    name: Optional[str] = None
+    expiration_date: Optional[str] = None
 
 class M3UPlaylist(BaseModel):
     model_config = ConfigDict(extra="ignore")
