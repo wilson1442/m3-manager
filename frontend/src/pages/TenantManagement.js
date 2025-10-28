@@ -17,7 +17,12 @@ export default function TenantManagement({ user, onLogout }) {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: "", owner_username: "", owner_password: "" });
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    owner_username: "", 
+    owner_password: "",
+    expiration_date: "2025-12-01" // Default to 12/1/2025
+  });
 
   const token = localStorage.getItem("token");
 
