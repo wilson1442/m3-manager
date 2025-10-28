@@ -619,7 +619,20 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if isinstance(user_doc['created_at'], str):
         user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
     
-    return User(**user_doc)
+    user = User(**user_doc)
+    
+    # Check tenant expiration (skip for super_admin)
+    if user.role != "super_admin" and user.tenant_id:
+        tenant = await db.tenants.find_one({"id": user.tenant_id}, {"_id": 0})
+        if tenant:
+            expiration = tenant.get('expiration_date')
+            if expiration:
+                if isinstance(expiration, str):
+                    expiration = datetime.fromisoformat(expiration)
+                if expiration.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+                    raise HTTPException(status_code=403, detail="Tenant subscription has expired. Please contact your administrator.")
+    
+    return user
 
 # Auth routes
 @api_router.post("/auth/register")
