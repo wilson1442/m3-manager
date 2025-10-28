@@ -263,15 +263,7 @@ export default function Events({ user, onLogout }) {
                                     data-testid={`copy-${category}-${index}`}
                                   >
                                     <Copy className="h-3 w-3 mr-1" />
-                                    Copy
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handlePlay(channel)}
-                                    data-testid={`play-${category}-${index}`}
-                                  >
-                                    <Play className="h-3 w-3 mr-1" />
-                                    Play
+                                    Copy URL
                                   </Button>
                                 </div>
                               </TableCell>
