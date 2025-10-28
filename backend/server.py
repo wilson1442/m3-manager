@@ -1522,7 +1522,16 @@ async def restore_tenant(backup_data: dict, current_user: User = Depends(get_cur
             await db.monitored_categories.insert_many(categories)
             restored_counts["monitored_categories"] = len(categories)
         
-
+        return {
+            "message": "Tenant data restored successfully",
+            "restored_counts": restored_counts,
+            "backup_date": backup_data.get("backup_date")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error restoring tenant backup: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Tenant restore failed: {str(e)}")
 
 # Dashboard Notes routes
 @api_router.get("/dashboard/notes")
