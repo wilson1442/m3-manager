@@ -976,27 +976,29 @@ export default function Settings({ user, onLogout }) {
                   Dashboard Notes
                 </CardTitle>
                 <CardDescription>
-                  Create announcements or notes that will be displayed on all users' dashboards
+                  Create announcements or notes that will be displayed on all users' dashboards. Basic HTML tags are supported.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Content (HTML Editor)</Label>
-                  <ReactQuill 
-                    theme="snow" 
-                    value={dashboardNotes} 
-                    onChange={setDashboardNotes}
-                    modules={{
-                      toolbar: [
-                        [{ 'header': [1, 2, 3, false] }],
-                        ['bold', 'italic', 'underline', 'strike'],
-                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-                        [{ 'color': [] }, { 'background': [] }],
-                        ['link'],
-                        ['clean']
-                      ]
-                    }}
-                    style={{ height: '300px', marginBottom: '50px' }}
+                  <Label htmlFor="notes-content">Content (HTML Supported)</Label>
+                  <Textarea
+                    id="notes-content"
+                    placeholder="Enter your announcement or notes here. You can use basic HTML tags like <b>, <i>, <u>, <h1>, <h2>, <h3>, <p>, <ul>, <li>, <br>, <a href=''>, etc."
+                    value={dashboardNotes}
+                    onChange={(e) => setDashboardNotes(e.target.value)}
+                    rows={12}
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Tip: Use HTML tags for formatting. Example: &lt;h2&gt;Title&lt;/h2&gt;&lt;p&gt;Your message here&lt;/p&gt;
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Preview</Label>
+                  <div 
+                    className="border rounded-md p-4 min-h-[100px] prose prose-sm dark:prose-invert max-w-none"
+                    dangerouslySetInnerHTML={{ __html: dashboardNotes || '<p class="text-muted-foreground">Preview will appear here...</p>' }}
                   />
                 </div>
                 <Button 
@@ -1013,7 +1015,7 @@ export default function Settings({ user, onLogout }) {
                 </Button>
                 <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm border border-blue-200 dark:border-blue-800">
                   <p className="text-blue-600 dark:text-blue-400">
-                    <strong>ℹ️ Note:</strong> These notes will be visible to all users on their dashboard. You can use the rich text editor to format your message with headers, lists, colors, and links.
+                    <strong>ℹ️ Note:</strong> These notes will be visible to all users on their dashboard. Use HTML tags for formatting (headings, bold, lists, links, etc.).
                   </p>
                 </div>
               </CardContent>
