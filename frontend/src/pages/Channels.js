@@ -712,14 +712,6 @@ export default function Channels({ user, onLogout }) {
                                   )}
                                   Probe
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  onClick={() => handlePlay(channel)}
-                                  className="text-xs"
-                                >
-                                  <Play className="h-3 w-3 mr-1" />
-                                  Play
-                                </Button>
                               </div>
                               
                               {ffmpegProbeData[channel.url] && (
