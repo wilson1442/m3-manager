@@ -691,15 +691,30 @@ async def create_tenant(tenant_data: TenantCreate, current_user: User = Depends(
     if existing_owner:
         raise HTTPException(status_code=400, detail="Owner username already exists")
     
+    # Parse expiration date if provided
+    expiration_date = datetime(2025, 12, 1, tzinfo=timezone.utc)
+    if tenant_data.expiration_date:
+        try:
+            from dateutil import parser
+            expiration_date = parser.parse(tenant_data.expiration_date).replace(tzinfo=timezone.utc)
+        except:
+            # If parsing fails, try simple format
+            try:
+                expiration_date = datetime.strptime(tenant_data.expiration_date, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            except:
+                raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD")
+    
     # Create tenant
     tenant = Tenant(
         name=tenant_data.name,
         owner_id="",  # Will be set after owner is created
+        expiration_date=expiration_date,
         created_by=current_user.id
     )
     
     tenant_doc = tenant.model_dump()
     tenant_doc['created_at'] = tenant_doc['created_at'].isoformat()
+    tenant_doc['expiration_date'] = tenant_doc['expiration_date'].isoformat()
     
     # Create tenant owner
     hashed_password = get_password_hash(tenant_data.owner_password)
@@ -720,6 +735,7 @@ async def create_tenant(tenant_data: TenantCreate, current_user: User = Depends(
     await db.users.insert_one(owner_doc)
     
     tenant_doc['created_at'] = datetime.fromisoformat(tenant_doc['created_at'])
+    tenant_doc['expiration_date'] = datetime.fromisoformat(tenant_doc['expiration_date'])
     return Tenant(**tenant_doc)
 
 @api_router.get("/tenants", response_model=List[Tenant])
