@@ -51,7 +51,12 @@ export default function TenantManagement({ user, onLogout }) {
       });
       toast.success("Tenant created successfully!");
       setIsAddDialogOpen(false);
-      setFormData({ name: "", owner_username: "", owner_password: "" });
+      setFormData({ 
+        name: "", 
+        owner_username: "", 
+        owner_password: "",
+        expiration_date: "2025-12-01"
+      });
       fetchTenants();
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to create tenant");
