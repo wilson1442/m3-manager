@@ -146,6 +146,44 @@ export default function Events({ user, onLogout }) {
           </Button>
         </div>
 
+        {/* Filters */}
+        {channels.length > 0 && (
+          <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <Select value={selectedPlaylist} onValueChange={setSelectedPlaylist}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Filter by playlist" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Playlists</SelectItem>
+                  {playlists.map((playlist) => (
+                    <SelectItem key={playlist.id} value={playlist.name}>
+                      {playlist.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search channels..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {searchQuery && (
+              <p className="text-sm text-muted-foreground">
+                Found {searchFilteredChannels.length} channels
+              </p>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : Object.keys(groupedChannels).length === 0 ? (
