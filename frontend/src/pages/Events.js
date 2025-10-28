@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Copy, Play, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { Copy, Play, RefreshCw, ChevronDown, ChevronRight, Filter, Search } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
