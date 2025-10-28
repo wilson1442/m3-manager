@@ -767,7 +767,7 @@ def main():
     
     tester = M3UManagerAPITester()
     
-    # Test sequence
+    # Test sequence - v1.0.1 Beta Features First (High Priority)
     test_sequence = [
         ("Super Admin Authentication", tester.test_super_admin_login),
         ("Tenant Management", tester.test_create_tenant),
@@ -780,6 +780,10 @@ def main():
         ("Get Playlists (Owner)", tester.test_get_m3u_playlists_as_owner),
         ("Get Playlists (User)", tester.test_get_m3u_playlists_as_user),
         ("Update Playlist", tester.test_update_m3u_playlist),
+        # v1.0.1 Beta Features (HIGH PRIORITY)
+        ("Categories API with Source Grouping (v1.0.1)", tester.test_categories_api_with_source_grouping),
+        ("Tenant Expiration Logic (v1.0.1)", tester.test_tenant_expiration_logic),
+        # Other existing features
         ("Theme Update", tester.test_theme_update),
         ("FFmpeg Stream Probing", tester.test_ffmpeg_stream_probing),
         ("Profile Image Upload", tester.test_profile_image_upload),
