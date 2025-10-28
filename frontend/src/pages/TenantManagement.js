@@ -224,6 +224,17 @@ export default function TenantManagement({ user, onLogout }) {
                           )}
                         </TableCell>
                         <TableCell>{new Date(tenant.created_at).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(tenant)}
+                            className="gap-1"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
