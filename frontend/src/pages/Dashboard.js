@@ -1,11 +1,36 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, ListMusic, Building2, Activity } from "lucide-react";
+import { Users, ListMusic, Building2, Activity, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 export default function Dashboard({ user, onLogout }) {
   const navigate = useNavigate();
+  const [notes, setNotes] = useState(null);
+  const [loadingNotes, setLoadingNotes] = useState(true);
+  const token = localStorage.getItem("token");
+
+  useEffect(() => {
+    fetchNotes();
+  }, []);
+
+  const fetchNotes = async () => {
+    try {
+      const response = await axios.get(`${API}/dashboard/notes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotes(response.data);
+    } catch (error) {
+      console.error("Failed to fetch notes:", error);
+    } finally {
+      setLoadingNotes(false);
+    }
+  };
 
   const stats = [
     {
