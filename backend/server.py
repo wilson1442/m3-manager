@@ -631,6 +631,9 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     if isinstance(user_doc['created_at'], str):
         user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
     
+    if user_doc.get('last_login') and isinstance(user_doc['last_login'], str):
+        user_doc['last_login'] = datetime.fromisoformat(user_doc['last_login'])
+    
     user = User(**user_doc)
     
     # Check tenant expiration (skip for super_admin)
