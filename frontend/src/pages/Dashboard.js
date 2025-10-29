@@ -250,7 +250,8 @@ export default function Dashboard({ user, onLogout }) {
                         )}
                       </CardContent>
                     </Card>
-                  ))}
+                  );
+                })}
                 </div>
               </div>
             )}
