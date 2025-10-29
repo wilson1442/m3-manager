@@ -109,13 +109,22 @@ export default function Layout({ user, onLogout, children, currentPage }) {
     );
   }
 
-  menuItems.push({
-    name: "Profile",
-    icon: User,
-    path: "/profile",
-    key: "profile",
-    roles: ["super_admin", "tenant_owner", "user"],
-  });
+  menuItems.push(
+    {
+      name: "Profile",
+      icon: User,
+      path: "/profile",
+      key: "profile",
+      roles: ["super_admin", "tenant_owner", "user"],
+    },
+    {
+      name: "Release Notes",
+      icon: FileText,
+      path: "/release-notes",
+      key: "release-notes",
+      roles: ["super_admin", "tenant_owner", "user"],
+    }
+  );
 
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(user.role));
 
