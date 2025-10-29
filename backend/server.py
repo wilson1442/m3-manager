@@ -973,10 +973,13 @@ async def create_m3u(playlist_data: M3UPlaylistCreate, current_user: User = Depe
 
 @api_router.get("/m3u", response_model=List[M3UPlaylist])
 async def get_m3u_playlists(current_user: User = Depends(get_current_user)):
-    if not current_user.tenant_id:
-        raise HTTPException(status_code=400, detail="User must belong to a tenant")
-    
-    playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
+    # Super admins can see all playlists, regular users see their tenant's playlists
+    if current_user.role == "super_admin":
+        playlists = await db.m3u_playlists.find({}, {"_id": 0}).to_list(1000)
+    else:
+        if not current_user.tenant_id:
+            raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        playlists = await db.m3u_playlists.find({"tenant_id": current_user.tenant_id}, {"_id": 0}).to_list(1000)
     
     for playlist in playlists:
         if isinstance(playlist['created_at'], str):
