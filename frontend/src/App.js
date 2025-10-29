@@ -165,6 +165,16 @@ function App() {
             }
           />
           <Route
+            path="/release-notes"
+            element={
+              isAuthenticated ? (
+                <ReleaseNotes user={user} onLogout={handleLogout} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
             path="/player"
             element={<Player />}
           />
