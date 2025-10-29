@@ -156,7 +156,7 @@ export default function Dashboard({ user, onLogout }) {
                         <CardTitle className="text-lg">{playlist.name}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-3">
-                        {playlist.player_api_url ? (
+                        {playlist.player_api ? (
                           <>
                             <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">Status</span>
