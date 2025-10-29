@@ -16,6 +16,7 @@ export default function Dashboard({ user, onLogout }) {
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [playlists, setPlaylists] = useState([]);
   const [loadingPlaylists, setLoadingPlaylists] = useState(true);
+  const [refreshingPlaylists, setRefreshingPlaylists] = useState(false);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -46,6 +47,32 @@ export default function Dashboard({ user, onLogout }) {
       console.error("Failed to fetch playlists:", error);
     } finally {
       setLoadingPlaylists(false);
+    }
+  };
+
+  const handleRefreshPlaylists = async () => {
+    setRefreshingPlaylists(true);
+    try {
+      const response = await axios.get(`${API}/m3u`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPlaylists(response.data);
+    } catch (error) {
+      console.error("Failed to refresh playlists:", error);
+    } finally {
+      setRefreshingPlaylists(false);
+    }
+  };
+
+  // Helper function to check if playlist is active based on expiration date
+  const isPlaylistActive = (expirationDate) => {
+    if (!expirationDate) return true; // No expiration = active
+    try {
+      const expDate = new Date(expirationDate);
+      const now = new Date();
+      return expDate > now;
+    } catch {
+      return true; // If date parsing fails, assume active
     }
   };
 
