@@ -158,51 +158,51 @@ export default function Dashboard({ user, onLogout }) {
                       <CardContent className="space-y-3">
                         {playlist.player_api_url ? (
                           <>
-                            {playlist.player_api_data ? (
-                              <>
-                                <div className="flex items-center justify-between">
-                                  <span className="text-sm text-muted-foreground">Status</span>
-                                  <Badge variant={playlist.player_api_data.status === "Active" ? "default" : "secondary"}>
-                                    {playlist.player_api_data.status === "Active" ? (
-                                      <><Wifi className="h-3 w-3 mr-1" />Active</>
-                                    ) : (
-                                      <><WifiOff className="h-3 w-3 mr-1" />Inactive</>
-                                    )}
-                                  </Badge>
-                                </div>
-                                
-                                {playlist.player_api_data.active_cons !== undefined && (
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground">Connections</span>
-                                    <span className="font-medium">
-                                      {playlist.player_api_data.active_cons} / {playlist.player_api_data.max_connections}
-                                    </span>
-                                  </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm text-muted-foreground">Status</span>
+                              <Badge variant={playlist.status === "Active" ? "default" : "secondary"}>
+                                {playlist.status === "Active" ? (
+                                  <><Wifi className="h-3 w-3 mr-1" />Active</>
+                                ) : (
+                                  <><WifiOff className="h-3 w-3 mr-1" />{playlist.status || "Inactive"}</>
                                 )}
-                                
-                                {playlist.player_api_data.exp_date && (
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                                      <Calendar className="h-3 w-3" />
-                                      Expires
-                                    </span>
-                                    <span className="font-medium text-sm">
-                                      {new Date(playlist.player_api_data.exp_date * 1000).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                )}
-                                
-                                {playlist.player_api_data.created_at && (
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-sm text-muted-foreground">Created</span>
-                                    <span className="text-sm">
-                                      {new Date(playlist.player_api_data.created_at * 1000).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <p className="text-sm text-muted-foreground">No API data available</p>
+                              </Badge>
+                            </div>
+                            
+                            {(playlist.active_connections !== undefined || playlist.max_connections !== undefined) && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Connections</span>
+                                <span className="font-medium">
+                                  {playlist.active_connections ?? 'N/A'} / {playlist.max_connections ?? 'N/A'}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {playlist.expiration_date && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  Expires
+                                </span>
+                                <span className="font-medium text-sm">
+                                  {new Date(playlist.expiration_date).toLocaleString()}
+                                </span>
+                              </div>
+                            )}
+                            
+                            {playlist.username && (
+                              <div className="flex items-center justify-between">
+                                <span className="text-sm text-muted-foreground">Username</span>
+                                <span className="text-sm font-mono">
+                                  {playlist.username}
+                                </span>
+                              </div>
+                            )}
+
+                            {playlist.api_last_checked && (
+                              <div className="text-xs text-muted-foreground">
+                                Last checked: {new Date(playlist.api_last_checked).toLocaleString()}
+                              </div>
                             )}
                           </>
                         ) : (
