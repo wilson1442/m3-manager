@@ -430,6 +430,7 @@ class User(BaseModel):
     theme: str = "light"  # light or dark
     profile_image: Optional[str] = None  # base64 encoded PNG
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_login: Optional[datetime] = None
 
 class UserCreate(BaseModel):
     username: str
