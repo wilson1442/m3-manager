@@ -170,44 +170,45 @@ export default function Dashboard({ user, onLogout }) {
             )}
           </div>
 
-          {/* Right Column - Player API Status */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Player API Status Cards */}
-            {!loadingPlaylists && playlists.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-bold">Playlist Status</h2>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleRefreshPlaylists}
-                    disabled={refreshingPlaylists}
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshingPlaylists ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </Button>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {playlists.map((playlist) => {
-                    const isActive = isPlaylistActive(playlist.expiration_date);
-                    return (
-                      <Card key={playlist.id}>
-                        <CardHeader>
-                          <CardTitle className="text-lg">{playlist.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                          {playlist.player_api ? (
-                            <>
-                              <div className="flex items-center justify-between">
-                                <span className="text-sm text-muted-foreground">Status</span>
-                                <Badge variant={isActive ? "default" : "secondary"}>
-                                  {isActive ? (
-                                    <><Wifi className="h-3 w-3 mr-1" />Active</>
-                                  ) : (
-                                    <><WifiOff className="h-3 w-3 mr-1" />Expired</>
-                                  )}
-                                </Badge>
-                              </div>
+          {/* Right Column - Player API Status (Hidden for Super Admins) */}
+          {user.role !== "super_admin" && (
+            <div className="lg:col-span-2 space-y-6">
+              {/* Player API Status Cards */}
+              {!loadingPlaylists && playlists.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-2xl font-bold">Playlist Status</h2>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleRefreshPlaylists}
+                      disabled={refreshingPlaylists}
+                    >
+                      <RefreshCw className={`h-4 w-4 mr-2 ${refreshingPlaylists ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {playlists.map((playlist) => {
+                      const isActive = isPlaylistActive(playlist.expiration_date);
+                      return (
+                        <Card key={playlist.id}>
+                          <CardHeader>
+                            <CardTitle className="text-lg">{playlist.name}</CardTitle>
+                          </CardHeader>
+                          <CardContent className="space-y-3">
+                            {playlist.player_api ? (
+                              <>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-muted-foreground">Status</span>
+                                  <Badge variant={isActive ? "default" : "secondary"}>
+                                    {isActive ? (
+                                      <><Wifi className="h-3 w-3 mr-1" />Active</>
+                                    ) : (
+                                      <><WifiOff className="h-3 w-3 mr-1" />Expired</>
+                                    )}
+                                  </Badge>
+                                </div>
                             
                             {(playlist.active_connections !== undefined || playlist.max_connections !== undefined) && (
                               <div className="flex items-center justify-between">
