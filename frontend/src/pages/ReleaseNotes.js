@@ -34,6 +34,16 @@ export default function ReleaseNotes({ user, onLogout }) {
           ],
         },
         {
+          title: "User Management",
+          icon: CheckCircle2,
+          color: "text-green-600",
+          items: [
+            "Last login tracking added to Users page",
+            "Shows login date/time or 'Never' for new users",
+            "Helps administrators track user activity",
+          ],
+        },
+        {
           title: "UI Cleanup",
           icon: CheckCircle2,
           color: "text-green-600",
