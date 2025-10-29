@@ -385,6 +385,7 @@ export default function UserManagement({ user, onLogout }) {
                     <TableHead>Role</TableHead>
                     {isSuperAdmin && <TableHead>Tenant</TableHead>}
                     <TableHead>Created At</TableHead>
+                    <TableHead>Last Login</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -404,6 +405,16 @@ export default function UserManagement({ user, onLogout }) {
                         </TableCell>
                       )}
                       <TableCell>{new Date(u.created_at).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        {u.last_login ? (
+                          <div className="text-sm">
+                            <div>{new Date(u.last_login).toLocaleDateString()}</div>
+                            <div className="text-xs text-muted-foreground">{new Date(u.last_login).toLocaleTimeString()}</div>
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Never</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
