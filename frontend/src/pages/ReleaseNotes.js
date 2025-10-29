@@ -16,9 +16,11 @@ export default function ReleaseNotes({ user, onLogout }) {
           color: "text-blue-600",
           items: [
             "Redesigned dashboard with two-column layout",
-            "Administrator notes moved to left sidebar (1/3 width)",
+            "Release notes added to the left side bar",
             "Player API status cards added to right side (2/3 width)",
             "Player API status shows connections, expiration, and status for each playlist",
+            "Dashboard refresh button for playlist status",
+            "Status indicator shows Active for future/no expiration dates",
           ],
         },
         {
