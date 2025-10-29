@@ -690,8 +690,19 @@ async def login(login_data: UserLogin):
             if expiration < datetime.now(timezone.utc):
                 raise HTTPException(status_code=403, detail="Tenant subscription has expired. Please contact your administrator.")
     
+    # Update last_login timestamp
+    now = datetime.now(timezone.utc)
+    await db.users.update_one(
+        {"id": user_doc['id']},
+        {"$set": {"last_login": now.isoformat()}}
+    )
+    user_doc['last_login'] = now.isoformat()
+    
     if isinstance(user_doc['created_at'], str):
         user_doc['created_at'] = datetime.fromisoformat(user_doc['created_at'])
+    
+    if isinstance(user_doc.get('last_login'), str):
+        user_doc['last_login'] = datetime.fromisoformat(user_doc['last_login'])
     
     user = User(**{k: v for k, v in user_doc.items() if k != 'password'})
     access_token = create_access_token(data={"sub": user.id})
