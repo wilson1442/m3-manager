@@ -12,6 +12,7 @@ import Categories from "@/pages/Categories";
 import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
 import Player from "@/pages/Player";
+import ReleaseNotes from "@/pages/ReleaseNotes";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
