@@ -5,6 +5,34 @@ All notable changes to M3U Manager will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-04-11
+
+### Security
+
+- **Path traversal in backup download** (`server.py:1881`) — the `/api/backup/files/{filename}` endpoint built the backup path from a user-controlled filename with no sanitization. A super admin could pass `../etc/passwd` (or any absolute path) and the handler would open it. Now rejects anything that is not a bare `.json` basename and re-validates the resolved path stays inside `BACKUP_DIR` (defeats symlink escapes).
+- **Stored XSS via `dangerouslySetInnerHTML`** on dashboard notes (`Dashboard.js:166`, `Settings.js:1001`). Admin notes are stored as HTML by design, so the render sites now sanitize with DOMPurify using a strict tag/attribute allowlist, and the backend `PUT /api/dashboard/notes` handler sanitizes again with bleach as defense in depth — so direct API calls cannot bypass the frontend sanitizer.
+- **Rotated the JWT signing secret** (`SECRET_KEY`) and restarted the backend. All pre-existing JWTs were invalidated; users had to log in again.
+- **Scrubbed leaked `.env` files from git history** via `git-filter-repo`. Historical `backend/.env` and `frontend/.env` blobs contained dev placeholders and preview URLs from the project's scaffolding — the real production secret was never in public history, but the scrub removes the misleading examples regardless.
+
+### Fixed
+
+- **Hardcoded tenant expiration default** (`server.py:456`, `server.py:731`). The `Tenant` model's `expiration_date` `default_factory` and the `create_tenant` handler both fell back to `datetime(2025, 12, 1)`. After that date every newly created tenant was born already expired, so login was immediately blocked with HTTP 403 "Tenant subscription has expired". Both sites now use a rolling `datetime.now(timezone.utc) + timedelta(days=365)`.
+
+### Changed
+
+- Replaced the project `.gitignore` with a canonical version. The previous file had accumulated ten-plus duplicate `# Environment files / *.env / *.env.*` blocks and literal `-e ` strings from broken `echo -e` appends, plus a hand-enumerated `frontend/node_modules/.cache/*.pack` list that is now covered by a glob.
+- Added `backend/.env.example` and `frontend/.env.example` documenting the required environment variables. The new `.gitignore` allowlists `*.env.example` while still ignoring real `.env` files.
+- Started tracking `frontend/yarn.lock` (~11k lines). It was previously untracked, meaning `yarn install` produced nondeterministic dependency versions across environments.
+
+### Dependencies
+
+- Added `dompurify@3.3.3` (frontend)
+- Added `bleach==6.3.0` (backend)
+
+### Notes
+
+- Version 1.1.1-beta was never released as production; its feature set (dashboard two-column layout, release notes sidebar, player API status cards, last-login tracking, UI cleanup) is rolled into this 1.1.1 production release.
+
 ## [1.1.0] - 2025-10-28
 
 ### Added
@@ -156,5 +184,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.1.1]: https://github.com/wilson1442/m3-manager/releases/tag/v1.1.1
 [1.1.0]: https://github.com/wilson1442/m3-manager/releases/tag/v1.1.0
 [1.0.0]: https://github.com/wilson1442/m3-manager/releases/tag/v1.0.0

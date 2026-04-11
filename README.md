@@ -1,11 +1,11 @@
 # M3U Manager
 
-**Version 1.0.0**
+**Version 1.1.1**
 
 A powerful multi-tenant IPTV playlist management system with advanced features for managing, monitoring, and streaming M3U playlists.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-1.1.1-green.svg)
 ![Node](https://img.shields.io/badge/node-20.x-brightgreen.svg)
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
 
@@ -268,7 +268,26 @@ If you can access locally but not through Cloudflare:
 
 ## 📝 Version History
 
-### Version 1.1.0 (Current) - October 2025
+### Version 1.1.1 (Current) - April 2026
+
+**Security Patch Release**
+
+**Security Fixes:**
+- Path traversal in backup download endpoint — super admins could previously read arbitrary server files
+- Stored XSS on dashboard notes via `dangerouslySetInnerHTML` — now sanitized with DOMPurify + bleach
+- Rotated JWT signing secret and scrubbed leaked `.env` files from git history
+
+**Bug Fixes:**
+- Fixed hardcoded tenant expiration default that caused new tenants to be born already expired after 2025-12-01 — now uses a rolling 1-year default
+
+**Housekeeping:**
+- Cleaned up a bloated `.gitignore` with accumulated duplicate patterns
+- Added `backend/.env.example` and `frontend/.env.example`
+- Started tracking `frontend/yarn.lock` for reproducible builds
+
+**Rolled up from 1.1.1-beta:** redesigned two-column dashboard, release notes sidebar, Player API status cards, last-login tracking, enhanced probe results.
+
+### Version 1.1.0 - October 2025
 
 **Production Release**
 

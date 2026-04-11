@@ -6,12 +6,33 @@ import { Calendar, CheckCircle2, Bug, Zap, Shield } from "lucide-react";
 export default function ReleaseNotes({ user, onLogout }) {
   const releases = [
     {
-      version: "1.1.1-beta",
-      date: "October 28, 2025",
-      type: "beta",
+      version: "1.1.1",
+      date: "April 11, 2026",
+      type: "production",
       sections: [
         {
-          title: "Dashboard Improvements",
+          title: "Security Fixes",
+          icon: Shield,
+          color: "text-red-600",
+          items: [
+            "Path traversal vulnerability in backup download endpoint — super admins could previously read arbitrary server files via crafted filenames",
+            "Stored XSS on the dashboard notes via dangerouslySetInnerHTML — admin notes now sanitized with DOMPurify on render and bleach on save (defense in depth)",
+            "Hardcoded tenant expiration default caused every newly created tenant to be born already expired — now uses a rolling 1-year default",
+            "Rotated the backend JWT signing secret and removed leaked .env files from git history",
+          ],
+        },
+        {
+          title: "Housekeeping",
+          icon: CheckCircle2,
+          color: "text-green-600",
+          items: [
+            "Cleaned up a bloated .gitignore that had accumulated duplicate environment-file patterns",
+            "Added backend/.env.example and frontend/.env.example to document required environment variables",
+            "Started tracking frontend/yarn.lock for reproducible builds",
+          ],
+        },
+        {
+          title: "Dashboard Improvements (rolled up from 1.1.1-beta)",
           icon: Zap,
           color: "text-blue-600",
           items: [
@@ -24,7 +45,7 @@ export default function ReleaseNotes({ user, onLogout }) {
           ],
         },
         {
-          title: "Enhanced Search & Probe",
+          title: "Enhanced Search & Probe (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
           color: "text-green-600",
           items: [
@@ -34,7 +55,7 @@ export default function ReleaseNotes({ user, onLogout }) {
           ],
         },
         {
-          title: "User Management",
+          title: "User Management (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
           color: "text-green-600",
           items: [
@@ -44,7 +65,7 @@ export default function ReleaseNotes({ user, onLogout }) {
           ],
         },
         {
-          title: "UI Cleanup",
+          title: "UI Cleanup (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
           color: "text-green-600",
           items: [
