@@ -11,8 +11,16 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import axios from "axios";
+import DOMPurify from "dompurify";
 import { toast } from "sonner";
 import { Download, Upload, Database, AlertCircle, Loader2, Calendar, Clock, Plus, Trash2, Settings as SettingsIcon, RefreshCw, GitBranch, AlertTriangle, FileText, Save } from "lucide-react";
+
+// Allowlist for sanitizing admin-authored dashboard notes. Keep in sync with
+// the identical config in Dashboard.js and the backend bleach config.
+const NOTES_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ["h1", "h2", "h3", "h4", "p", "br", "strong", "em", "u", "ul", "ol", "li", "a", "code", "pre", "blockquote"],
+  ALLOWED_ATTR: ["href", "target", "rel"],
+};
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -996,9 +1004,13 @@ export default function Settings({ user, onLogout }) {
                 </div>
                 <div className="space-y-2">
                   <Label>Preview</Label>
-                  <div 
+                  <div
                     className="border rounded-md p-4 min-h-[100px] prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: dashboardNotes || '<p class="text-muted-foreground">Preview will appear here...</p>' }}
+                    dangerouslySetInnerHTML={{
+                      __html: dashboardNotes
+                        ? DOMPurify.sanitize(dashboardNotes, NOTES_SANITIZE_CONFIG)
+                        : '<p class="text-muted-foreground">Preview will appear here...</p>',
+                    }}
                   />
                 </div>
                 <Button 

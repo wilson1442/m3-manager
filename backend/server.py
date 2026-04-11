@@ -17,6 +17,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import asyncio
 import subprocess
 import json
+import bleach
+
+# Allowlist for sanitizing admin-authored dashboard notes. Must stay in sync
+# with NOTES_SANITIZE_CONFIG in frontend/src/pages/Dashboard.js and Settings.js.
+NOTES_ALLOWED_TAGS = [
+    "h1", "h2", "h3", "h4", "p", "br", "strong", "em", "u",
+    "ul", "ol", "li", "a", "code", "pre", "blockquote",
+]
+NOTES_ALLOWED_ATTRS = {"a": ["href", "target", "rel"]}
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -453,7 +462,9 @@ class Tenant(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     owner_id: str
-    expiration_date: Optional[datetime] = Field(default_factory=lambda: datetime(2025, 12, 1, tzinfo=timezone.utc))
+    expiration_date: Optional[datetime] = Field(
+        default_factory=lambda: datetime.now(timezone.utc) + timedelta(days=365)
+    )
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str
 
@@ -727,8 +738,8 @@ async def create_tenant(tenant_data: TenantCreate, current_user: User = Depends(
     if existing_owner:
         raise HTTPException(status_code=400, detail="Owner username already exists")
     
-    # Parse expiration date if provided
-    expiration_date = datetime(2025, 12, 1, tzinfo=timezone.utc)
+    # Parse expiration date if provided; default to 1 year from today
+    expiration_date = datetime.now(timezone.utc) + timedelta(days=365)
     if tenant_data.expiration_date:
         try:
             from dateutil import parser
@@ -1573,10 +1584,20 @@ async def update_dashboard_notes(
     """Update dashboard notes (super admin only)"""
     if current_user.role != "super_admin":
         raise HTTPException(status_code=403, detail="Only super admins can update notes")
-    
+
+    # Defense-in-depth: sanitize HTML server-side even though the frontend
+    # also sanitizes on render. Protects against direct API calls and anyone
+    # who might bypass the frontend sanitizer.
+    sanitized_content = bleach.clean(
+        notes_update.content or "",
+        tags=NOTES_ALLOWED_TAGS,
+        attributes=NOTES_ALLOWED_ATTRS,
+        strip=True,
+    )
+
     notes_data = {
         "id": str(uuid.uuid4()),
-        "content": notes_update.content,
+        "content": sanitized_content,
         "updated_by": current_user.username,
         "updated_at": datetime.now(timezone.utc).isoformat()
     }
@@ -1883,11 +1904,25 @@ async def download_backup_file(filename: str, current_user: User = Depends(get_c
     """Download a backup file (Super Admin only)"""
     if current_user.role != "super_admin":
         raise HTTPException(status_code=403, detail="Only super admins can download backup files")
-    
-    backup_file = BACKUP_DIR / filename
-    if not backup_file.exists() or not backup_file.is_file():
+
+    # Reject anything that isn't a plain basename to defeat path traversal
+    # (e.g. "../etc/passwd", "/etc/passwd", ".hidden"). Filename must be a
+    # bare *.json file living directly in BACKUP_DIR.
+    if filename != Path(filename).name or filename.startswith("."):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+    if not filename.endswith(".json"):
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    # Defense-in-depth: resolve the final path and confirm it is still
+    # contained within BACKUP_DIR. Catches symlink escapes.
+    backup_dir_resolved = BACKUP_DIR.resolve()
+    backup_file = (BACKUP_DIR / filename).resolve()
+    if backup_dir_resolved not in backup_file.parents:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    if not backup_file.is_file():
         raise HTTPException(status_code=404, detail="Backup file not found")
-    
+
     with open(backup_file, 'r') as f:
         return json.load(f)
 

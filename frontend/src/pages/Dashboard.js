@@ -1,11 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import DOMPurify from "dompurify";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, ListMusic, Building2, Activity, FileText, Wifi, WifiOff, Calendar, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
+// Allowlist for sanitizing admin-authored dashboard notes. Keep in sync with
+// the identical config in Settings.js (preview) and the backend bleach config.
+const NOTES_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: ["h1", "h2", "h3", "h4", "p", "br", "strong", "em", "u", "ul", "ol", "li", "a", "code", "pre", "blockquote"],
+  ALLOWED_ATTR: ["href", "target", "rel"],
+};
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
@@ -161,9 +169,11 @@ export default function Dashboard({ user, onLogout }) {
                   )}
                 </CardHeader>
                 <CardContent>
-                  <div 
+                  <div
                     className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: notes.content }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(notes.content || "", NOTES_SANITIZE_CONFIG),
+                    }}
                   />
                 </CardContent>
               </Card>
