@@ -8,8 +8,7 @@ import { toast } from "sonner";
 import { Moon, Sun, User as UserIcon, Upload, Trash2 } from "lucide-react";
 import { useState, useRef } from "react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function Profile({ user, onLogout, theme, updateTheme }) {
   const token = localStorage.getItem("token");

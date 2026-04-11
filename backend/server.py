@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -685,15 +685,38 @@ async def register(user_data: UserCreate):
     access_token = create_access_token(data={"sub": user.id})
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
+def _client_ip(request: Request) -> str:
+    """Return the client IP, honoring X-Forwarded-For (nginx proxies all
+    requests). Falls back to the direct socket address if the header is
+    absent."""
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        # X-Forwarded-For is a comma-separated list; the first entry is
+        # the original client.
+        return xff.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
 @api_router.post("/auth/login")
-async def login(login_data: UserLogin):
+async def login(login_data: UserLogin, request: Request):
+    client_ip = _client_ip(request)
+    # NB: username is logged verbatim. Do NOT log the password field or
+    # any part of login_data.password anywhere in this handler.
     user_doc = await db.users.find_one({"username": login_data.username}, {"_id": 0})
     if not user_doc:
+        logger.warning(
+            "Failed login: unknown username=%r from ip=%s",
+            login_data.username, client_ip,
+        )
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    
+
     if not verify_password(login_data.password, user_doc['password']):
+        logger.warning(
+            "Failed login: bad password for username=%r from ip=%s",
+            login_data.username, client_ip,
+        )
         raise HTTPException(status_code=401, detail="Invalid username or password")
-    
+
     # Check tenant expiration before issuing token
     if user_doc.get('tenant_id'):
         tenant = await db.tenants.find_one({"id": user_doc['tenant_id']}, {"_id": 0})
@@ -702,6 +725,10 @@ async def login(login_data: UserLogin):
             if isinstance(expiration, str):
                 expiration = datetime.fromisoformat(expiration)
             if expiration < datetime.now(timezone.utc):
+                logger.warning(
+                    "Failed login: expired tenant for username=%r tenant_id=%s from ip=%s",
+                    login_data.username, user_doc.get('tenant_id'), client_ip,
+                )
                 raise HTTPException(status_code=403, detail="Tenant subscription has expired. Please contact your administrator.")
     
     # Update last_login timestamp
@@ -720,7 +747,12 @@ async def login(login_data: UserLogin):
     
     user = User(**{k: v for k, v in user_doc.items() if k != 'password'})
     access_token = create_access_token(data={"sub": user.id})
-    
+
+    logger.info(
+        "Successful login: username=%r role=%s from ip=%s",
+        user.username, user.role, client_ip,
+    )
+
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
 @api_router.get("/auth/me", response_model=User)

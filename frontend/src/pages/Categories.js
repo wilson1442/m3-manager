@@ -11,8 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { toast } from "sonner";
 import { Eye, ChevronDown, ChevronRight, Filter, Search } from "lucide-react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function Categories({ user, onLogout }) {
   const [categories, setCategories] = useState([]);

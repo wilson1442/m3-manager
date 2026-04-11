@@ -11,8 +11,7 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Link as LinkIcon, RefreshCw, Clock } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function M3UManagement({ user, onLogout }) {
   const [playlists, setPlaylists] = useState([]);

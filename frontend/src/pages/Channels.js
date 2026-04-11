@@ -13,8 +13,7 @@ import { toast } from "sonner";
 import { Search, Copy, Play, Radio, Loader2, Download, ChevronDown, ChevronRight, Image as ImageIcon, Filter, Pause, RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function Channels({ user, onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");

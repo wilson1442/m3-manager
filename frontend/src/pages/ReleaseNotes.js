@@ -6,6 +6,41 @@ import { Calendar, CheckCircle2, Bug, Zap, Shield } from "lucide-react";
 export default function ReleaseNotes({ user, onLogout }) {
   const releases = [
     {
+      version: "1.1.2",
+      date: "April 11, 2026",
+      type: "production",
+      sections: [
+        {
+          title: "Portability",
+          icon: Zap,
+          color: "text-blue-600",
+          items: [
+            "Frontend now calls the backend via relative /api paths instead of a hardcoded domain",
+            "Same bundle works on any origin (LAN IP, Cloudflare tunnel, localhost) as long as nginx proxies /api/* to the backend",
+            "No rebuild required when the backend domain changes — this would have prevented the 2026-04-11 login outage entirely",
+          ],
+        },
+        {
+          title: "Observability",
+          icon: CheckCircle2,
+          color: "text-green-600",
+          items: [
+            "Failed login attempts are now logged with WARNING level, including the attempted username and client IP (X-Forwarded-For honored)",
+            "Three distinct failure reasons are distinguished: unknown username, bad password, expired tenant",
+            "Successful logins logged at INFO level so `journalctl | grep login` shows the full picture",
+          ],
+        },
+        {
+          title: "Housekeeping",
+          icon: CheckCircle2,
+          color: "text-green-600",
+          items: [
+            "Removed 1,089 lines of dead code (Channels_old.js and Categories_new.js, neither imported anywhere)",
+          ],
+        },
+      ],
+    },
+    {
       version: "1.1.1",
       date: "April 11, 2026",
       type: "production",

@@ -11,8 +11,7 @@ import { toast } from "sonner";
 import { Copy, Play, RefreshCw, ChevronDown, ChevronRight, Filter, Search } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function Events({ user, onLogout }) {
   const [channels, setChannels] = useState([]);

@@ -5,6 +5,26 @@ All notable changes to M3U Manager will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2026-04-11
+
+### Changed
+
+- **Frontend calls the backend via relative `/api` paths** instead of a hardcoded `REACT_APP_BACKEND_URL`. The same production bundle now works on any origin as long as the reverse proxy forwards `/api/*` to the FastAPI backend (nginx is already configured this way in the stock install). Previously the backend URL was baked into the JS bundle at build time, which meant any domain change required a rebuild — and caused the 2026-04-11 login outage when `m3u.g3h.cloud` was decommissioned but the bundle still pointed at it. Touches 11 page files; `REACT_APP_BACKEND_URL` is no longer read anywhere in `frontend/src/`.
+- `frontend/.env` and `frontend/.env.example` updated to document the new pattern.
+
+### Added
+
+- **Failed-login logging** (`server.py:688`). The `/api/auth/login` handler now emits a `WARNING` log line for each authentication failure, including the attempted username and client IP (honoring `X-Forwarded-For` when behind a reverse proxy). Three distinct failure reasons are distinguished in the log message: unknown username, bad password, and expired tenant. Successful logins are logged at `INFO` level for symmetry, so `journalctl -u m3u-backend | grep -E 'login'` gives you the full picture.
+
+### Removed
+
+- **Dead code cleanup:** `frontend/src/pages/Channels_old.js` (852 lines) and `frontend/src/pages/Categories_new.js` (237 lines). Neither file was imported from anywhere in `src/`.
+
+### Investigation
+
+- **OOM kill on 2026-04-11 at 10:50:44** (2.2 GB peak on a ~4 GiB LXC container). Investigation did not land a fix in this release because the spike couldn't be reproduced from the logs alone — the 9-minute window of memory growth prior to OOM contained zero logged backend activity (uvicorn access logs are off and failed-login logging was only added in this release). The most likely trigger is a single request to `/api/channels/search`, `/api/categories`, or `/api/backup/*` with a broad query: each of those handlers loads every playlist's `content` field into memory and calls `parse_m3u_content` to build Python dicts for all channels on every invocation. For the current data set (17 playlists, 34 MB raw content, ~160k channels) that's ~160 MB per call — survivable in isolation, but a handful of concurrent calls plus motor driver overhead can plausibly hit 2+ GB.
+  - **Recommended follow-up (not in this release):** parse channels at ingestion time into a dedicated `channels` collection with indexes on `tenant_id`, `playlist_id`, `group`, and a text index on `name`. Then the search/categories/export handlers can query the indexed collection directly rather than re-parsing the blob. This also lets `list_playlists` project out the `content` field.
+
 ## [1.1.1] - 2026-04-11
 
 ### Security
@@ -184,6 +204,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[1.1.2]: https://github.com/wilson1442/m3-manager/releases/tag/v1.1.2
 [1.1.1]: https://github.com/wilson1442/m3-manager/releases/tag/v1.1.1
 [1.1.0]: https://github.com/wilson1442/m3-manager/releases/tag/v1.1.0
 [1.0.0]: https://github.com/wilson1442/m3-manager/releases/tag/v1.0.0

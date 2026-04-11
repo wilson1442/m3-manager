@@ -10,8 +10,7 @@ import { toast } from "sonner";
 import { Plus, Building2, Pencil } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function TenantManagement({ user, onLogout }) {
   const [tenants, setTenants] = useState([]);

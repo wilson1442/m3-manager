@@ -1,11 +1,11 @@
 # M3U Manager
 
-**Version 1.1.1**
+**Version 1.1.2**
 
 A powerful multi-tenant IPTV playlist management system with advanced features for managing, monitoring, and streaming M3U playlists.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-1.1.1-green.svg)
+![Version](https://img.shields.io/badge/version-1.1.2-green.svg)
 ![Node](https://img.shields.io/badge/node-20.x-brightgreen.svg)
 ![Python](https://img.shields.io/badge/python-3.x-blue.svg)
 
@@ -268,7 +268,20 @@ If you can access locally but not through Cloudflare:
 
 ## 📝 Version History
 
-### Version 1.1.1 (Current) - April 2026
+### Version 1.1.2 (Current) - April 2026
+
+**Operability & Portability Release**
+
+**Changed:**
+- Frontend now calls the backend via the relative path `/api` instead of a hardcoded `REACT_APP_BACKEND_URL`. The same bundle works on any origin as long as the reverse proxy forwards `/api/*` to the backend — no rebuild needed when the domain changes.
+
+**Added:**
+- Failed-login attempts are now logged with `WARNING` level, including the attempted username and client IP (honoring `X-Forwarded-For`). Three distinct failure reasons are logged: unknown username, bad password, and expired tenant. Successful logins are logged at `INFO` level.
+
+**Removed:**
+- Dead code: `frontend/src/pages/Channels_old.js` (852 lines) and `frontend/src/pages/Categories_new.js` (237 lines).
+
+### Version 1.1.1 - April 2026
 
 **Security Patch Release**
 

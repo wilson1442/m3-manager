@@ -8,8 +8,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import { Download, Upload, Database, AlertCircle, Loader2 } from "lucide-react";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const API = "/api";
 
 export default function BackupRestore({ user, onLogout }) {
   const [backupType, setBackupType] = useState("full");
