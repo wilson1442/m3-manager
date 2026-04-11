@@ -6,8 +6,7 @@
 
 # Dependencies
 node_modules/
-/node_modules
-/.pnp
+.pnp
 .pnp.js
 .yarn/install-state.gz
 .yarn/*
@@ -28,12 +27,11 @@ next-env.d.ts
 # Production builds
 /build
 dist/
-dist
 
-# Environment files (comprehensive coverage)
-
-*token.json*
-*credentials.json*
+# Environment files (never commit secrets; use .env.example instead)
+*.env
+*.env.*
+!*.env.example
 
 # Logs and debug files
 npm-debug.log*
@@ -42,29 +40,25 @@ yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
 
+# Credentials / tokens
+*token.json*
+*credentials.json*
+*.pem
+
 # System files
 .DS_Store
-*.pem
 
 # Python
 __pycache__/
-*pyc*
+*.pyc
 venv/
 .venv/
 
-# Development tools
-chainlit.md
-.chainlit
-.ipynb_checkpoints/
-.ac
+# Caches
+.cache/
+frontend/node_modules/.cache/
 
-# Deployment
-.vercel
-
-# Data and databases
-agenthub/agents/youtube/db
-
-# Archive files and large assets
+# Archive files and large binaries
 **/*.zip
 **/*.tar.gz
 **/*.tar
@@ -73,97 +67,14 @@ agenthub/agents/youtube/db
 *.deb
 *.dylib
 
-# Build caches
-.cache/
+# Local backups created by the updater
+backup_before_update/
+*.bak-*
 
-# Mobile development
-android-sdk/ frontend/node_modules/.cache/default-development/6.pack
-frontend/node_modules/.cache/default-development/6.pack
-frontend/node_modules/.cache/default-development/0.pack
-frontend/node_modules/.cache/default-development/2.pack
-frontend/node_modules/.cache/default-development/1.pack
-frontend/node_modules/.cache/default-development/4.pack
-frontend/node_modules/.cache/default-development/5.pack
-frontend/node_modules/.cache/default-development/3.pack
-frontend/node_modules/.cache/default-development/7.pack
-frontend/node_modules/.cache/default-development/9.pack
-frontend/node_modules/.cache/default-development/10.pack
-frontend/node_modules/.cache/default-development/11.pack
-frontend/node_modules/.cache/default-development/12.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/8.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/13.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
-frontend/node_modules/.cache/default-development/15.pack
-frontend/node_modules/.cache/default-development/17.pack
-frontend/node_modules/.cache/default-development/18.pack
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
--e 
-# Environment files
-*.env
-*.env.*
+# Deployment
+.vercel
+
+# Misc dev tools
+chainlit.md
+.chainlit
+.ipynb_checkpoints/
