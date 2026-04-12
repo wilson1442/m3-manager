@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Plus, Trash2, UserCircle, Filter, Pencil, LogIn } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { stashAdminSession } from "@/lib/impersonation";
+import { stashAdminSession, isImpersonating } from "@/lib/impersonation";
 
 const API = "/api";
 
@@ -42,7 +42,10 @@ export default function UserManagement({ user, onLogout, onRestoreAdmin }) {
   const token = localStorage.getItem("token");
   const isSuperAdmin = user.role === "super_admin";
 
+  const impersonateInFlightRef = useRef(false);
+
   const canImpersonate = (row) => {
+    if (isImpersonating()) return false;
     if (row.id === user.id) return false;
     if (row.role === "super_admin") return false;
     if (user.role === "super_admin") return true;
@@ -53,6 +56,8 @@ export default function UserManagement({ user, onLogout, onRestoreAdmin }) {
   };
 
   const handleImpersonate = async (row) => {
+    if (impersonateInFlightRef.current) return;
+    impersonateInFlightRef.current = true;
     try {
       const response = await axios.post(
         `${API}/auth/impersonate/${row.id}`,
@@ -68,6 +73,7 @@ export default function UserManagement({ user, onLogout, onRestoreAdmin }) {
       window.location.href = "/dashboard";
     } catch (error) {
       toast.error(error.response?.data?.detail || "Failed to impersonate user");
+      impersonateInFlightRef.current = false;
     }
   };
 

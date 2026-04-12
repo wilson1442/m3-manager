@@ -14,7 +14,7 @@ import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
 import Player from "@/pages/Player";
 import ReleaseNotes from "@/pages/ReleaseNotes";
-import { isImpersonating } from "@/lib/impersonation";
+import { isImpersonating, ADMIN_TOKEN_KEY, ADMIN_USER_KEY } from "@/lib/impersonation";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -57,8 +57,8 @@ function App() {
     // Full logout: wipe both the active session and any stashed admin.
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    sessionStorage.removeItem("adminToken");
-    sessionStorage.removeItem("adminUser");
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_USER_KEY);
     setIsAuthenticated(false);
     setUser(null);
   };

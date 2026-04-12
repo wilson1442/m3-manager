@@ -10,8 +10,8 @@
  * existing page continues to read from the same place it always has.
  */
 
-const ADMIN_TOKEN_KEY = "adminToken";
-const ADMIN_USER_KEY = "adminUser";
+export const ADMIN_TOKEN_KEY = "adminToken";
+export const ADMIN_USER_KEY = "adminUser";
 
 /**
  * Stash the current localStorage token/user as the admin session,
