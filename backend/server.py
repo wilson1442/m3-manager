@@ -826,22 +826,25 @@ async def impersonate_stop(
 
     now = datetime.now(timezone.utc)
 
-    # Best-effort: patch the most recent open row for this (admin, target).
-    # Nested impersonation is forbidden, so at most one row can be open
-    # per (admin, target) pair at a time — the ended_at: None filter is
-    # sufficient without an explicit sort.
-    result = await db.impersonation_events.update_one(
+    # Use find_one_and_update with a sort so we always close the MOST
+    # RECENT open row. This matters when an admin has multiple open
+    # rows for the same target (possible if they opened impersonation
+    # sessions in parallel tabs, or if a previous session was
+    # abandoned without a clean stop).
+    updated = await db.impersonation_events.find_one_and_update(
         {
             "admin_id": impersonator_id,
             "target_user_id": current_user.id,
             "ended_at": None,
         },
         {"$set": {"ended_at": now.isoformat()}},
+        sort=[("started_at", -1)],
     )
 
     logger.info(
-        "Impersonation end: admin_id=%s target=%r matched=%d",
-        impersonator_id, current_user.username, result.modified_count,
+        "Impersonation end: admin_id=%s target=%r matched=%s",
+        impersonator_id, current_user.username,
+        "yes" if updated else "no",
     )
 
     return {"ok": True}
