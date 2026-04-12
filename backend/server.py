@@ -637,6 +637,19 @@ async def get_current_user(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ):
+    """Resolve the authenticated user from the bearer token.
+
+    Decodes the incoming JWT, loads the corresponding user from Mongo,
+    and enforces tenant expiration for non-super_admin accounts. If the
+    token carries an ``act`` claim (impersonation), the impersonator's
+    user id is stashed on ``request.state.impersonator_id`` so downstream
+    handlers and loggers can record who is really acting.
+
+    Returns:
+        The authenticated ``User`` (the target of impersonation, when
+        applicable — authorization decisions use this user, not the
+        impersonator).
+    """
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -648,8 +661,10 @@ async def get_current_user(
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
 
-    # Stash the impersonator id (if any) so downstream handlers and loggers
-    # can record that an action was taken by an admin acting as someone else.
+    # Stash the impersonator id so downstream handlers and loggers can
+    # record that an action was taken by an admin acting as someone else.
+    # Value contract: None when this is a normal login, or the real
+    # admin's user id (str) when the caller is impersonating.
     request.state.impersonator_id = payload.get("act")
 
     user_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
