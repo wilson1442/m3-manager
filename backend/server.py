@@ -633,7 +633,10 @@ def create_access_token(data: dict, expires_minutes: Optional[int] = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -644,7 +647,11 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
+
+    # Stash the impersonator id (if any) so downstream handlers and loggers
+    # can record that an action was taken by an admin acting as someone else.
+    request.state.impersonator_id = payload.get("act")
+
     user_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
     if user_doc is None:
         raise HTTPException(status_code=401, detail="User not found")
