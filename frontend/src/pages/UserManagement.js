@@ -9,13 +9,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Trash2, UserCircle, Filter, Pencil } from "lucide-react";
+import { Plus, Trash2, UserCircle, Filter, Pencil, LogIn } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { stashAdminSession } from "@/lib/impersonation";
 
 const API = "/api";
 
-export default function UserManagement({ user, onLogout }) {
+export default function UserManagement({ user, onLogout, onRestoreAdmin }) {
   const [users, setUsers] = useState([]);
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,35 @@ export default function UserManagement({ user, onLogout }) {
 
   const token = localStorage.getItem("token");
   const isSuperAdmin = user.role === "super_admin";
+
+  const canImpersonate = (row) => {
+    if (row.id === user.id) return false;
+    if (row.role === "super_admin") return false;
+    if (user.role === "super_admin") return true;
+    if (user.role === "tenant_owner") {
+      return row.role === "user" && row.tenant_id === user.tenant_id;
+    }
+    return false;
+  };
+
+  const handleImpersonate = async (row) => {
+    try {
+      const response = await axios.post(
+        `${API}/auth/impersonate/${row.id}`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const { access_token, user: targetUser } = response.data;
+      stashAdminSession(access_token, targetUser);
+      toast.success(`Now impersonating ${targetUser.username}`);
+      // Force a full reload so App.js picks up the new localStorage state
+      // and the banner mounts cleanly. Simpler than plumbing an upward
+      // callback.
+      window.location.href = "/dashboard";
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Failed to impersonate user");
+    }
+  };
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -198,7 +228,7 @@ export default function UserManagement({ user, onLogout }) {
   };
 
   return (
-    <Layout user={user} onLogout={onLogout} currentPage="users">
+    <Layout user={user} onLogout={onLogout} onRestoreAdmin={onRestoreAdmin} currentPage="users">
       <div className="space-y-6" data-testid="user-management-page">
         <div className="flex justify-between items-center">
           <div>
@@ -416,6 +446,17 @@ export default function UserManagement({ user, onLogout }) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {canImpersonate(u) && (
+                            <Button
+                              data-testid={`impersonate-user-${u.id}`}
+                              variant="outline"
+                              size="sm"
+                              title={`Log in as ${u.username}`}
+                              onClick={() => handleImpersonate(u)}
+                            >
+                              <LogIn className="h-3 w-3" />
+                            </Button>
+                          )}
                           <Button
                             data-testid={`edit-user-${u.id}`}
                             variant="outline"
