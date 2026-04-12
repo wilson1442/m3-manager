@@ -616,9 +616,19 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, expires_minutes: Optional[int] = None):
+    """Create a signed JWT.
+
+    Args:
+        data: Claims to embed in the token. Must include "sub". May include
+            "act" (actor id) for impersonation tokens.
+        expires_minutes: Lifetime in minutes. Defaults to
+            ACCESS_TOKEN_EXPIRE_MINUTES for normal logins. Impersonation
+            callers pass 60.
+    """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    minutes = expires_minutes if expires_minutes is not None else ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
