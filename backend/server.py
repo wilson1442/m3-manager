@@ -605,6 +605,24 @@ class DashboardNotes(BaseModel):
 class DashboardNotesUpdate(BaseModel):
     content: str
 
+class ImpersonationEvent(BaseModel):
+    """Audit record written when an admin impersonates a user.
+
+    One row is created on impersonation start; ended_at is patched on stop
+    or expires silently (never patched) if the admin closes the tab.
+    """
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    admin_id: str
+    admin_username: str
+    target_user_id: str
+    target_username: str
+    tenant_id: Optional[str] = None  # target user's tenant
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: Optional[datetime] = None
+    ip: str
+    user_agent: Optional[str] = None
+
 # Backup directory setup
 BACKUP_DIR = ROOT_DIR / "backups"
 BACKUP_DIR.mkdir(exist_ok=True)
@@ -616,14 +634,40 @@ def verify_password(plain_password, hashed_password):
 def get_password_hash(password):
     return pwd_context.hash(password)
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, expires_minutes: Optional[int] = None):
+    """Create a signed JWT.
+
+    Args:
+        data: Claims to embed in the token. Must include "sub". May include
+            "act" (actor id) for impersonation tokens.
+        expires_minutes: Lifetime in minutes. Defaults to
+            ACCESS_TOKEN_EXPIRE_MINUTES for normal logins. Impersonation
+            callers pass 60.
+    """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    minutes = expires_minutes if expires_minutes is not None else ACCESS_TOKEN_EXPIRE_MINUTES
+    expire = datetime.now(timezone.utc) + timedelta(minutes=minutes)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_current_user(
+    request: Request,
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+):
+    """Resolve the authenticated user from the bearer token.
+
+    Decodes the incoming JWT, loads the corresponding user from Mongo,
+    and enforces tenant expiration for non-super_admin accounts. If the
+    token carries an ``act`` claim (impersonation), the impersonator's
+    user id is stashed on ``request.state.impersonator_id`` so downstream
+    handlers and loggers can record who is really acting.
+
+    Returns:
+        The authenticated ``User`` (the target of impersonation, when
+        applicable — authorization decisions use this user, not the
+        impersonator).
+    """
     try:
         token = credentials.credentials
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -634,7 +678,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.JWTError:
         raise HTTPException(status_code=401, detail="Invalid authentication credentials")
-    
+
+    # Stash the impersonator id so downstream handlers and loggers can
+    # record that an action was taken by an admin acting as someone else.
+    # Value contract: None when this is a normal login, or the real
+    # admin's user id (str) when the caller is impersonating.
+    request.state.impersonator_id = payload.get("act")
+
     user_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
     if user_doc is None:
         raise HTTPException(status_code=401, detail="User not found")
@@ -754,6 +804,162 @@ async def login(login_data: UserLogin, request: Request):
     )
 
     return {"access_token": access_token, "token_type": "bearer", "user": user}
+
+# NOTE: /stop must be registered BEFORE /{user_id} — FastAPI matches
+# routes in registration order, and a path parameter would otherwise
+# capture "stop" as a user_id and this endpoint would be unreachable.
+@api_router.post("/auth/impersonate/stop")
+async def impersonate_stop(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """End an impersonation session.
+
+    Requires that the caller's token carry an `act` claim. Patches the
+    matching open impersonation_events row with ended_at and emits a log
+    line. The frontend is responsible for restoring the admin token
+    locally; the server does not reissue one.
+    """
+    impersonator_id = request.state.impersonator_id
+    if impersonator_id is None:
+        raise HTTPException(status_code=400, detail="Not an impersonation session")
+
+    now = datetime.now(timezone.utc)
+
+    # Use find_one_and_update with a sort so we always close the MOST
+    # RECENT open row. This matters when an admin has multiple open
+    # rows for the same target (possible if they opened impersonation
+    # sessions in parallel tabs, or if a previous session was
+    # abandoned without a clean stop).
+    updated = await db.impersonation_events.find_one_and_update(
+        {
+            "admin_id": impersonator_id,
+            "target_user_id": current_user.id,
+            "ended_at": None,
+        },
+        {"$set": {"ended_at": now.isoformat()}},
+        sort=[("started_at", -1)],
+    )
+
+    logger.info(
+        "Impersonation end: admin_id=%s target=%r matched=%s",
+        impersonator_id, current_user.username,
+        "yes" if updated else "no",
+    )
+
+    return {"ok": True}
+
+
+@api_router.post("/auth/impersonate/{user_id}")
+async def impersonate_user(
+    user_id: str,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """Issue a short-lived impersonation token for the target user.
+
+    Permissions:
+        - super_admin: any non-super_admin user
+        - tenant_owner: only role=user within their own tenant
+    Nesting is forbidden: callers whose own token has an `act` claim
+    cannot start a new impersonation.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent")
+
+    # Block nested impersonation. get_current_user always sets this
+    # attribute, so we can read it directly.
+    if request.state.impersonator_id is not None:
+        logger.warning(
+            "Rejected nested impersonation: caller=%r target=%s from ip=%s",
+            current_user.username, user_id, client_ip,
+        )
+        raise HTTPException(status_code=403, detail="Cannot impersonate while already impersonating")
+
+    # Role gate.
+    if current_user.role not in ("super_admin", "tenant_owner"):
+        raise HTTPException(status_code=403, detail="Only admins can impersonate users")
+
+    # No self-impersonation.
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot impersonate yourself")
+
+    # Load target.
+    target_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not target_doc:
+        # For tenant_owners this also covers cross-tenant lookups — we 404
+        # either way to avoid leaking existence across tenant boundaries.
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Never impersonate a super_admin.
+    if target_doc.get("role") == "super_admin":
+        raise HTTPException(status_code=403, detail="Cannot impersonate a super admin")
+
+    # Tenant_owner further restrictions.
+    if current_user.role == "tenant_owner":
+        if target_doc.get("tenant_id") != current_user.tenant_id:
+            raise HTTPException(status_code=404, detail="User not found")
+        if target_doc.get("role") != "user":
+            raise HTTPException(status_code=403, detail="Tenant owners can only impersonate regular users")
+
+    # Tenant expiration check (same shape as login handler).
+    if target_doc.get("tenant_id"):
+        tenant = await db.tenants.find_one({"id": target_doc["tenant_id"]}, {"_id": 0})
+        if tenant and tenant.get("expiration_date"):
+            expiration = tenant["expiration_date"]
+            if isinstance(expiration, str):
+                expiration = datetime.fromisoformat(expiration)
+            if expiration.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
+                logger.warning(
+                    "Rejected impersonation: expired tenant target=%r tenant_id=%s admin=%r from ip=%s",
+                    target_doc.get("username"), target_doc.get("tenant_id"),
+                    current_user.username, client_ip,
+                )
+                raise HTTPException(status_code=403, detail="Target user's tenant subscription has expired")
+
+    # Mint the impersonation token (60-minute lifetime). The admin's
+    # original token is intentionally NOT invalidated — the frontend
+    # stashes it in sessionStorage and restores it on "Return to admin".
+    access_token = create_access_token(
+        data={"sub": target_doc["id"], "act": current_user.id},
+        expires_minutes=60,
+    )
+
+    # Audit row.
+    event = ImpersonationEvent(
+        admin_id=current_user.id,
+        admin_username=current_user.username,
+        target_user_id=target_doc["id"],
+        target_username=target_doc["username"],
+        tenant_id=target_doc.get("tenant_id"),
+        ip=client_ip,
+        user_agent=user_agent,
+    )
+    event_doc = event.model_dump()
+    event_doc["started_at"] = event_doc["started_at"].isoformat()
+    if event_doc.get("ended_at"):
+        event_doc["ended_at"] = event_doc["ended_at"].isoformat()
+    await db.impersonation_events.insert_one(event_doc)
+
+    logger.info(
+        "Impersonation start: admin=%r target=%r tenant=%s from ip=%s event_id=%s",
+        current_user.username, target_doc["username"],
+        target_doc.get("tenant_id"), client_ip, event.id,
+    )
+
+    # Coerce the target user doc into our response model.
+    if isinstance(target_doc.get("created_at"), str):
+        target_doc["created_at"] = datetime.fromisoformat(target_doc["created_at"])
+    if isinstance(target_doc.get("last_login"), str):
+        target_doc["last_login"] = datetime.fromisoformat(target_doc["last_login"])
+    target_user = User(**{k: v for k, v in target_doc.items() if k != "password"})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": target_user,
+        "impersonation_id": event.id,
+    }
 
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: User = Depends(get_current_user)):

@@ -14,6 +14,7 @@ import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
 import Player from "@/pages/Player";
 import ReleaseNotes from "@/pages/ReleaseNotes";
+import { isImpersonating, ADMIN_TOKEN_KEY, ADMIN_USER_KEY } from "@/lib/impersonation";
 import { Toaster } from "@/components/ui/sonner";
 
 function App() {
@@ -44,9 +45,20 @@ function App() {
     setUser(userData);
   };
 
+  // Called by ImpersonationBanner after it restores the admin session.
+  // token/userData are the restored admin values.
+  const handleRestoreAdmin = (token, userData) => {
+    setUser(userData);
+    setIsAuthenticated(true);
+    // localStorage is already updated by restoreAdminSession().
+  };
+
   const handleLogout = () => {
+    // Full logout: wipe both the active session and any stashed admin.
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+    sessionStorage.removeItem(ADMIN_USER_KEY);
     setIsAuthenticated(false);
     setUser(null);
   };
@@ -79,7 +91,7 @@ function App() {
             path="/dashboard"
             element={
               isAuthenticated ? (
-                <Dashboard user={user} onLogout={handleLogout} />
+                <Dashboard user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -89,7 +101,7 @@ function App() {
             path="/m3u"
             element={
               isAuthenticated ? (
-                <M3UManagement user={user} onLogout={handleLogout} />
+                <M3UManagement user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -99,7 +111,7 @@ function App() {
             path="/users"
             element={
               isAuthenticated ? (
-                <UserManagement user={user} onLogout={handleLogout} />
+                <UserManagement user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -109,7 +121,7 @@ function App() {
             path="/tenants"
             element={
               isAuthenticated ? (
-                <TenantManagement user={user} onLogout={handleLogout} />
+                <TenantManagement user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -119,7 +131,7 @@ function App() {
             path="/profile"
             element={
               isAuthenticated ? (
-                <Profile user={user} onLogout={handleLogout} theme={theme} updateTheme={updateTheme} />
+                <Profile user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} theme={theme} updateTheme={updateTheme} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -129,7 +141,7 @@ function App() {
             path="/channels"
             element={
               isAuthenticated ? (
-                <Channels user={user} onLogout={handleLogout} />
+                <Channels user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -139,7 +151,7 @@ function App() {
             path="/categories"
             element={
               isAuthenticated ? (
-                <Categories user={user} onLogout={handleLogout} />
+                <Categories user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -149,7 +161,7 @@ function App() {
             path="/events"
             element={
               isAuthenticated ? (
-                <Events user={user} onLogout={handleLogout} />
+                <Events user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -159,7 +171,7 @@ function App() {
             path="/settings"
             element={
               isAuthenticated ? (
-                <Settings user={user} onLogout={handleLogout} />
+                <Settings user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -169,7 +181,7 @@ function App() {
             path="/release-notes"
             element={
               isAuthenticated ? (
-                <ReleaseNotes user={user} onLogout={handleLogout} />
+                <ReleaseNotes user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )
