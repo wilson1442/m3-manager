@@ -16,8 +16,9 @@ import {
   FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import ImpersonationBanner from "@/components/ImpersonationBanner";
 
-export default function Layout({ user, onLogout, children, currentPage }) {
+export default function Layout({ user, onLogout, onRestoreAdmin, children, currentPage }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -227,7 +228,10 @@ export default function Layout({ user, onLogout, children, currentPage }) {
       )}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-20 lg:pt-10 px-4 sm:px-6 lg:px-10 pb-10">{children}</main>
+      <main className="lg:ml-64 pt-20 lg:pt-10 pb-10">
+        <ImpersonationBanner currentUser={user} onRestored={onRestoreAdmin} />
+        <div className="px-4 sm:px-6 lg:px-10">{children}</div>
+      </main>
     </div>
   );
 }
