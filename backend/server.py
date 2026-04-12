@@ -805,6 +805,114 @@ async def login(login_data: UserLogin, request: Request):
 
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
+@api_router.post("/auth/impersonate/{user_id}")
+async def impersonate_user(
+    user_id: str,
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """Issue a short-lived impersonation token for the target user.
+
+    Permissions:
+        - super_admin: any non-super_admin user
+        - tenant_owner: only role=user within their own tenant
+    Nesting is forbidden: callers whose own token has an `act` claim
+    cannot start a new impersonation.
+    """
+    client_ip = _client_ip(request)
+    user_agent = request.headers.get("user-agent")
+
+    # Block nested impersonation.
+    if getattr(request.state, "impersonator_id", None) is not None:
+        logger.warning(
+            "Rejected nested impersonation: caller=%r target=%s from ip=%s",
+            current_user.username, user_id, client_ip,
+        )
+        raise HTTPException(status_code=403, detail="Cannot impersonate while already impersonating")
+
+    # Role gate.
+    if current_user.role not in ("super_admin", "tenant_owner"):
+        raise HTTPException(status_code=403, detail="Only admins can impersonate users")
+
+    # No self-impersonation.
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Cannot impersonate yourself")
+
+    # Load target.
+    target_doc = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not target_doc:
+        # For tenant_owners this also covers cross-tenant lookups — we 404
+        # either way to avoid leaking existence across tenant boundaries.
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Never impersonate a super_admin.
+    if target_doc.get("role") == "super_admin":
+        raise HTTPException(status_code=403, detail="Cannot impersonate a super admin")
+
+    # Tenant_owner further restrictions.
+    if current_user.role == "tenant_owner":
+        if target_doc.get("tenant_id") != current_user.tenant_id:
+            raise HTTPException(status_code=404, detail="User not found")
+        if target_doc.get("role") != "user":
+            raise HTTPException(status_code=403, detail="Tenant owners can only impersonate regular users")
+
+    # Tenant expiration check (same shape as login handler).
+    if target_doc.get("tenant_id"):
+        tenant = await db.tenants.find_one({"id": target_doc["tenant_id"]}, {"_id": 0})
+        if tenant and tenant.get("expiration_date"):
+            expiration = tenant["expiration_date"]
+            if isinstance(expiration, str):
+                expiration = datetime.fromisoformat(expiration)
+            if expiration < datetime.now(timezone.utc):
+                logger.warning(
+                    "Rejected impersonation: expired tenant target=%r tenant_id=%s admin=%r from ip=%s",
+                    target_doc.get("username"), target_doc.get("tenant_id"),
+                    current_user.username, client_ip,
+                )
+                raise HTTPException(status_code=403, detail="Target user's tenant subscription has expired")
+
+    # Mint the impersonation token (60-minute lifetime).
+    access_token = create_access_token(
+        data={"sub": target_doc["id"], "act": current_user.id},
+        expires_minutes=60,
+    )
+
+    # Audit row.
+    event = ImpersonationEvent(
+        admin_id=current_user.id,
+        admin_username=current_user.username,
+        target_user_id=target_doc["id"],
+        target_username=target_doc["username"],
+        tenant_id=target_doc.get("tenant_id"),
+        ip=client_ip,
+        user_agent=user_agent,
+    )
+    event_doc = event.model_dump()
+    event_doc["started_at"] = event_doc["started_at"].isoformat()
+    if event_doc.get("ended_at"):
+        event_doc["ended_at"] = event_doc["ended_at"].isoformat()
+    await db.impersonation_events.insert_one(event_doc)
+
+    logger.info(
+        "Impersonation start: admin=%r target=%r tenant=%s from ip=%s event_id=%s",
+        current_user.username, target_doc["username"],
+        target_doc.get("tenant_id"), client_ip, event.id,
+    )
+
+    # Coerce the target user doc into our response model.
+    if isinstance(target_doc.get("created_at"), str):
+        target_doc["created_at"] = datetime.fromisoformat(target_doc["created_at"])
+    if isinstance(target_doc.get("last_login"), str):
+        target_doc["last_login"] = datetime.fromisoformat(target_doc["last_login"])
+    target_user = User(**{k: v for k, v in target_doc.items() if k != "password"})
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": target_user,
+        "impersonation_id": event.id,
+    }
+
 @api_router.get("/auth/me", response_model=User)
 async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
