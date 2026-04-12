@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
+/* ------------------------------------------------------------------ */
+/*  Quiet Premium — global design foundation                          */
+/*  Warm neutral dark · warm paper light · single amber accent        */
+/*  Typography: Plus Jakarta Sans (loaded from index.html)            */
+/* ------------------------------------------------------------------ */
 
 * {
   margin: 0;
@@ -6,62 +10,174 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: 'Inter', sans-serif;
+html, body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.005em;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Manrope', sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
 }
 
 .App {
   min-height: 100vh;
 }
 
-/* Light theme */
+/* ------------------------------------------------------------------ */
+/*  LIGHT MODE — warm paper, ink text, amber accent                    */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 214 32% 91%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 214 32% 95%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 214 32% 95%;
-  --accent-foreground: 222 47% 11%;
-  --destructive: 0 84% 60%;
+  --radius: 0.875rem;
+
+  /* surfaces */
+  --background: 40 20% 97%;          /* #F8F7F3 warm paper */
+  --foreground: 240 10% 9%;          /* #15151A ink */
+  --card: 0 0% 100%;                 /* #FFFFFF */
+  --card-foreground: 240 10% 9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 9%;
+
+  /* accent — single warm amber */
+  --primary: 38 91% 54%;             /* #F5A524 */
+  --primary-foreground: 240 10% 9%;  /* ink on amber */
+
+  --secondary: 40 20% 94%;           /* #F1EFE9 warm light */
+  --secondary-foreground: 240 10% 14%;
+
+  --muted: 40 15% 93%;
+  --muted-foreground: 240 4% 42%;    /* #67676E */
+
+  --accent: 40 20% 94%;
+  --accent-foreground: 240 10% 9%;
+
+  --destructive: 6 74% 62%;          /* #E07A6C soft coral */
   --destructive-foreground: 0 0% 100%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 217 91% 60%;
+
+  --border: 40 12% 89%;              /* #E7E3DB warm border */
+  --input: 40 12% 89%;
+  --ring: 38 91% 54%;
+
+  /* chart palette — muted warm tones */
+  --chart-1: 38 91% 54%;
+  --chart-2: 130 35% 60%;
+  --chart-3: 20 70% 60%;
+  --chart-4: 200 30% 50%;
+  --chart-5: 280 25% 55%;
 }
 
-/* Dark theme */
+/* ------------------------------------------------------------------ */
+/*  DARK MODE — warm neutral dark, cream text, amber accent            */
+/* ------------------------------------------------------------------ */
 .dark {
-  --background: 222 47% 11%;
-  --foreground: 210 40% 98%;
-  --card: 217 33% 17%;
-  --card-foreground: 210 40% 98%;
-  --primary: 217 91% 60%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 217 33% 21%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217 33% 21%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 21%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 217 33% 21%;
-  --input: 217 33% 21%;
-  --ring: 217 91% 60%;
+  --background: 240 7% 6%;           /* #0E0E10 warm ink */
+  --foreground: 60 9% 98%;           /* #FAFAF9 cream */
+  --card: 240 6% 10%;                /* #18181B panel */
+  --card-foreground: 60 9% 98%;
+  --popover: 240 6% 10%;
+  --popover-foreground: 60 9% 98%;
+
+  --primary: 38 91% 55%;             /* #F5A524 amber */
+  --primary-foreground: 240 10% 9%;  /* ink on amber */
+
+  --secondary: 240 5% 13%;           /* #202024 */
+  --secondary-foreground: 60 9% 98%;
+
+  --muted: 240 5% 13%;
+  --muted-foreground: 240 3% 64%;    /* #A1A1A5 */
+
+  --accent: 240 5% 13%;
+  --accent-foreground: 60 9% 98%;
+
+  --destructive: 6 74% 62%;
+  --destructive-foreground: 60 9% 98%;
+
+  --border: 240 4% 16%;              /* #27272A */
+  --input: 240 4% 16%;
+  --ring: 38 91% 55%;
+
+  --chart-1: 38 91% 55%;
+  --chart-2: 130 35% 60%;
+  --chart-3: 20 70% 60%;
+  --chart-4: 200 30% 60%;
+  --chart-5: 280 25% 65%;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Atmospheric background — subtle warm radial tint                   */
+/*  Applied body-wide so every page inherits the mood                  */
+/* ------------------------------------------------------------------ */
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  background-image:
+    radial-gradient(1200px 600px at 85% -10%, hsla(38, 91%, 54%, 0.05), transparent 60%),
+    radial-gradient(900px 500px at -10% 100%, hsla(38, 91%, 54%, 0.03), transparent 60%);
+  background-attachment: fixed;
+}
+
+.dark body {
+  background-image:
+    radial-gradient(1100px 500px at 85% -10%, rgba(245, 165, 36, 0.06), transparent 60%),
+    radial-gradient(900px 600px at -10% 100%, rgba(245, 165, 36, 0.03), transparent 60%);
 }
 
 .transition-colors {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Global typographic rhythm                                          */
+/* ------------------------------------------------------------------ */
+.qp-eyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: hsl(var(--muted-foreground));
+}
+
+.qp-title {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.qp-subtitle {
+  color: hsl(var(--muted-foreground));
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+/* Refined focus ring — amber */
+*:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Scrollbar styling (webkit) */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+  border: 2px solid hsl(var(--background));
+}
+::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / 0.4); }
+
+/* Soft rise animation, reusable across pages */
+@keyframes qp-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.qp-rise { animation: qp-rise 0.65s cubic-bezier(.25,.85,.4,1) both; }
+.qp-d-1 { animation-delay: 0.03s; }
+.qp-d-2 { animation-delay: 0.08s; }
+.qp-d-3 { animation-delay: 0.13s; }
+.qp-d-4 { animation-delay: 0.18s; }
+.qp-d-5 { animation-delay: 0.23s; }
+.qp-d-6 { animation-delay: 0.28s; }

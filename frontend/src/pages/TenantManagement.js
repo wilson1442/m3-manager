@@ -241,7 +241,7 @@ export default function TenantManagement({ user, onLogout }) {
                         <TableCell className="font-mono text-sm text-muted-foreground">{tenant.owner_id}</TableCell>
                         <TableCell>
                           {expirationDate ? (
-                            <span className={isExpired ? "text-red-600 font-medium" : ""}>
+                            <span className={isExpired ? "text-destructive font-medium" : ""}>
                               {expirationDate.toLocaleDateString()}
                             </span>
                           ) : (
@@ -250,15 +250,15 @@ export default function TenantManagement({ user, onLogout }) {
                         </TableCell>
                         <TableCell>
                           {isExpired ? (
-                            <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                            <span className="inline-flex items-center rounded-full bg-destructive/15 px-2.5 py-0.5 text-xs font-semibold text-destructive border border-destructive/30">
                               Expired
                             </span>
                           ) : expirationDate ? (
-                            <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            <span className="inline-flex items-center rounded-full bg-[#7BC47F]/15 px-2.5 py-0.5 text-xs font-semibold text-[#7BC47F] border border-[#7BC47F]/30">
                               Active
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-muted-foreground border border-border">
                               No Expiration
                             </span>
                           )}

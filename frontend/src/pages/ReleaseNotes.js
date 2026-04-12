@@ -13,7 +13,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Portability",
           icon: Zap,
-          color: "text-blue-600",
+          color: "text-primary",
           items: [
             "Frontend now calls the backend via relative /api paths instead of a hardcoded domain",
             "Same bundle works on any origin (LAN IP, Cloudflare tunnel, localhost) as long as nginx proxies /api/* to the backend",
@@ -23,7 +23,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Observability",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Failed login attempts are now logged with WARNING level, including the attempted username and client IP (X-Forwarded-For honored)",
             "Three distinct failure reasons are distinguished: unknown username, bad password, expired tenant",
@@ -33,7 +33,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Housekeeping",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Removed 1,089 lines of dead code (Channels_old.js and Categories_new.js, neither imported anywhere)",
           ],
@@ -48,7 +48,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Security Fixes",
           icon: Shield,
-          color: "text-red-600",
+          color: "text-destructive",
           items: [
             "Path traversal vulnerability in backup download endpoint — super admins could previously read arbitrary server files via crafted filenames",
             "Stored XSS on the dashboard notes via dangerouslySetInnerHTML — admin notes now sanitized with DOMPurify on render and bleach on save (defense in depth)",
@@ -59,7 +59,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Housekeeping",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Cleaned up a bloated .gitignore that had accumulated duplicate environment-file patterns",
             "Added backend/.env.example and frontend/.env.example to document required environment variables",
@@ -69,7 +69,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Dashboard Improvements (rolled up from 1.1.1-beta)",
           icon: Zap,
-          color: "text-blue-600",
+          color: "text-primary",
           items: [
             "Redesigned dashboard with two-column layout",
             "Release notes added to the left side bar",
@@ -82,7 +82,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Enhanced Search & Probe (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Full stream URL now visible on search results",
             "Probe results show comprehensive details (format, resolution, codecs, bitrate, FPS)",
@@ -92,7 +92,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "User Management (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Last login tracking added to Users page",
             "Shows login date/time or 'Never' for new users",
@@ -102,7 +102,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "UI Cleanup (rolled up from 1.1.1-beta)",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Removed M3U content preview from playlist management page",
             "Cleaner playlist card display with focus on key information",
@@ -118,7 +118,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "New Features",
           icon: Zap,
-          color: "text-blue-600",
+          color: "text-primary",
           items: [
             "Dashboard Notes system with HTML support for super admins",
             "Rich text announcements visible to all users",
@@ -132,7 +132,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "UI/UX Improvements",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Collapsible category groups by source",
             "Dual filtering system (dropdown + text search)",
@@ -145,7 +145,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Security",
           icon: Shield,
-          color: "text-purple-600",
+          color: "text-primary",
           items: [
             "Tenant expiration check at login",
             "Expired tenants blocked from obtaining new tokens",
@@ -155,7 +155,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Bug Fixes",
           icon: Bug,
-          color: "text-orange-600",
+          color: "text-primary",
           items: [
             "Fixed channel search parameter mismatch",
             "Fixed search results showing only single playlist",
@@ -174,7 +174,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Core Features",
           icon: Zap,
-          color: "text-blue-600",
+          color: "text-primary",
           items: [
             "Multi-tenant architecture with role-based access control",
             "M3U playlist management with automatic hourly refresh",
@@ -189,7 +189,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Administration",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Full database and per-tenant backup/restore",
             "Scheduled backups with retention policies",
@@ -201,7 +201,7 @@ export default function ReleaseNotes({ user, onLogout }) {
         {
           title: "Infrastructure",
           icon: CheckCircle2,
-          color: "text-green-600",
+          color: "text-[#7BC47F]",
           items: [
             "Cloudflare Tunnel support in installer",
             "Virtual environment for Python dependencies",

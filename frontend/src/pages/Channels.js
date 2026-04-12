@@ -654,8 +654,8 @@ export default function Channels({ user, onLogout }) {
                               {channelStatus[channel.url] && (
                                 <div className="text-xs space-y-1">
                                   <div className="flex items-center gap-1">
-                                    <Radio className={`h-3 w-3 ${channelStatus[channel.url].online ? 'text-green-500' : 'text-red-500'}`} />
-                                    <span className={channelStatus[channel.url].online ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                                    <Radio className={`h-3 w-3 ${channelStatus[channel.url].online ? 'text-[#7BC47F]' : 'text-destructive'}`} />
+                                    <span className={channelStatus[channel.url].online ? 'text-[#7BC47F] font-medium' : 'text-destructive font-medium'}>
                                       {channelStatus[channel.url].online ? 'Online' : channelStatus[channel.url].status}
                                     </span>
                                   </div>
@@ -777,14 +777,14 @@ export default function Channels({ user, onLogout }) {
             </DialogHeader>
             
             {playerError && (
-              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md border border-red-200 dark:border-red-800">
-                <p className="text-sm text-red-600 dark:text-red-400">{playerError}</p>
+              <div className="bg-destructive/10 p-3 rounded-md border border-destructive/30">
+                <p className="text-sm text-destructive">{playerError}</p>
               </div>
             )}
             
             {!playerReady && !playerError && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-600 dark:text-blue-400 flex items-center gap-2">
+              <div className="bg-primary/10 p-3 rounded-md border border-primary/30">
+                <p className="text-sm text-primary flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Loading stream...
                 </p>
@@ -895,7 +895,7 @@ export default function Channels({ user, onLogout }) {
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Online:</span>
-                      <span className={`ml-2 font-semibold ${currentDetails.probeData.online ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`ml-2 font-semibold ${currentDetails.probeData.online ? 'text-[#7BC47F]' : 'text-destructive'}`}>
                         {currentDetails.probeData.online ? 'Yes' : 'No'}
                       </span>
                     </div>
@@ -949,9 +949,9 @@ export default function Channels({ user, onLogout }) {
                 )}
 
                 {currentDetails.probeData.error && (
-                  <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
-                    <h3 className="font-semibold text-red-600 dark:text-red-400 mb-2">Error</h3>
-                    <p className="text-sm text-red-600 dark:text-red-400">{currentDetails.probeData.error}</p>
+                  <div className="bg-destructive/10 p-4 rounded-lg border border-destructive/30">
+                    <h3 className="font-semibold text-destructive mb-2">Error</h3>
+                    <p className="text-sm text-destructive">{currentDetails.probeData.error}</p>
                   </div>
                 )}
               </div>

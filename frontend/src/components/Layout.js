@@ -1,6 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, ListMusic, Users, Building2, User, LogOut, Menu, X, Search, FolderTree, Calendar, Settings as SettingsIcon, FileText } from "lucide-react";
+import {
+  LayoutDashboard,
+  ListMusic,
+  Users,
+  Building2,
+  User,
+  LogOut,
+  Menu,
+  X,
+  Search,
+  FolderTree,
+  Calendar,
+  Settings as SettingsIcon,
+  FileText,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function Layout({ user, onLogout, children, currentPage }) {
@@ -19,120 +33,102 @@ export default function Layout({ user, onLogout, children, currentPage }) {
 
   if (user.role === "super_admin") {
     menuItems.push(
-      {
-        name: "Tenants",
-        icon: Building2,
-        path: "/tenants",
-        key: "tenants",
-        roles: ["super_admin"],
-      },
-      {
-        name: "Users",
-        icon: Users,
-        path: "/users",
-        key: "users",
-        roles: ["super_admin"],
-      },
-      {
-        name: "Settings",
-        icon: SettingsIcon,
-        path: "/settings",
-        key: "settings",
-        roles: ["super_admin"],
-      }
+      { name: "Tenants", icon: Building2, path: "/tenants", key: "tenants", roles: ["super_admin"] },
+      { name: "Users", icon: Users, path: "/users", key: "users", roles: ["super_admin"] },
+      { name: "Settings", icon: SettingsIcon, path: "/settings", key: "settings", roles: ["super_admin"] }
     );
   }
 
   if (user.role === "tenant_owner") {
     menuItems.push(
-      {
-        name: "Users",
-        icon: Users,
-        path: "/users",
-        key: "users",
-        roles: ["tenant_owner"],
-      },
-      {
-        name: "M3U Playlists",
-        icon: ListMusic,
-        path: "/m3u",
-        key: "m3u",
-        roles: ["tenant_owner"],
-      },
-      {
-        name: "Search Channels",
-        icon: Search,
-        path: "/channels",
-        key: "channels",
-        roles: ["tenant_owner"],
-      },
-      {
-        name: "Categories",
-        icon: FolderTree,
-        path: "/categories",
-        key: "categories",
-        roles: ["tenant_owner"],
-      },
-      {
-        name: "Events",
-        icon: Calendar,
-        path: "/events",
-        key: "events",
-        roles: ["tenant_owner"],
-      }
+      { name: "Users", icon: Users, path: "/users", key: "users", roles: ["tenant_owner"] },
+      { name: "M3U Playlists", icon: ListMusic, path: "/m3u", key: "m3u", roles: ["tenant_owner"] },
+      { name: "Search Channels", icon: Search, path: "/channels", key: "channels", roles: ["tenant_owner"] },
+      { name: "Categories", icon: FolderTree, path: "/categories", key: "categories", roles: ["tenant_owner"] },
+      { name: "Events", icon: Calendar, path: "/events", key: "events", roles: ["tenant_owner"] }
     );
   }
 
   if (user.role === "user") {
     menuItems.push(
-      {
-        name: "Playlists",
-        icon: ListMusic,
-        path: "/m3u",
-        key: "m3u",
-        roles: ["user"],
-      },
-      {
-        name: "Search Channels",
-        icon: Search,
-        path: "/channels",
-        key: "channels",
-        roles: ["user"],
-      },
-      {
-        name: "Events",
-        icon: Calendar,
-        path: "/events",
-        key: "events",
-        roles: ["user"],
-      }
+      { name: "Playlists", icon: ListMusic, path: "/m3u", key: "m3u", roles: ["user"] },
+      { name: "Search Channels", icon: Search, path: "/channels", key: "channels", roles: ["user"] },
+      { name: "Events", icon: Calendar, path: "/events", key: "events", roles: ["user"] }
     );
   }
 
   menuItems.push(
-    {
-      name: "Profile",
-      icon: User,
-      path: "/profile",
-      key: "profile",
-      roles: ["super_admin", "tenant_owner", "user"],
-    },
-    {
-      name: "Release Notes",
-      icon: FileText,
-      path: "/release-notes",
-      key: "release-notes",
-      roles: ["super_admin", "tenant_owner", "user"],
-    }
+    { name: "Profile", icon: User, path: "/profile", key: "profile", roles: ["super_admin", "tenant_owner", "user"] },
+    { name: "Release Notes", icon: FileText, path: "/release-notes", key: "release-notes", roles: ["super_admin", "tenant_owner", "user"] }
   );
 
   const filteredMenuItems = menuItems.filter((item) => item.roles.includes(user.role));
+  const roleLabel = user.role.replace("_", " ");
 
   return (
     <div className="min-h-screen bg-background transition-colors">
+      <style>{`
+        .qp-sidebar {
+          background: hsl(var(--card));
+          border-right: 1px solid hsl(var(--border));
+        }
+        .qp-brand-dot {
+          width: 8px; height: 8px; border-radius: 999px;
+          background: hsl(var(--primary));
+          box-shadow: 0 0 12px hsla(38, 91%, 55%, 0.55);
+        }
+        .qp-nav-item {
+          display: flex; align-items: center; gap: 12px;
+          padding: 10px 14px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 500;
+          letter-spacing: -0.005em;
+          color: hsl(var(--muted-foreground));
+          transition: color 180ms ease, background 180ms ease;
+          width: 100%;
+          text-align: left;
+          position: relative;
+        }
+        .qp-nav-item:hover {
+          background: hsl(var(--muted));
+          color: hsl(var(--foreground));
+        }
+        .qp-nav-item.active {
+          background: linear-gradient(180deg, hsla(38, 91%, 55%, 0.14), hsla(38, 91%, 55%, 0.08));
+          color: hsl(var(--foreground));
+        }
+        .qp-nav-item.active::before {
+          content: "";
+          position: absolute;
+          left: 0; top: 8px; bottom: 8px;
+          width: 2px;
+          background: hsl(var(--primary));
+          border-radius: 2px;
+        }
+        .qp-nav-item.active svg { color: hsl(var(--primary)); }
+
+        .qp-mobile-header {
+          background: hsl(var(--card) / 0.9);
+          backdrop-filter: blur(10px);
+          border-bottom: 1px solid hsl(var(--border));
+        }
+
+        .qp-user-chip {
+          display: flex; align-items: center; gap: 10px;
+          padding: 10px 12px;
+          background: hsl(var(--muted) / 0.5);
+          border: 1px solid hsl(var(--border));
+          border-radius: 12px;
+        }
+      `}</style>
+
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border flex items-center justify-between px-4 z-50">
-        <h1 className="text-xl font-bold">M3U Manager</h1>
+      <div className="qp-mobile-header lg:hidden fixed top-0 left-0 right-0 h-16 flex items-center justify-between px-4 z-50">
+        <div className="flex items-center gap-2.5">
+          <span className="qp-brand-dot" />
+          <h1 className="text-lg font-bold tracking-tight">M3U Manager</h1>
+        </div>
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} data-testid="mobile-menu-toggle">
           {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </Button>
@@ -140,24 +136,45 @@ export default function Layout({ user, onLogout, children, currentPage }) {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-card border-r border-border z-40 transition-transform duration-300 lg:translate-x-0 ${
+        className={`qp-sidebar fixed top-0 left-0 h-full w-64 z-40 transition-transform duration-300 lg:translate-x-0 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         data-testid="sidebar"
       >
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-2">M3U Manager</h1>
-          <div className="flex items-center gap-2">
-            {user.profile_image && (
-              <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-border flex-shrink-0">
+        {/* Brand */}
+        <div className="px-6 pt-7 pb-6">
+          <div className="flex items-center gap-2.5 mb-5">
+            <span className="qp-brand-dot" />
+            <h1 className="text-xl font-bold tracking-tight">M3U Manager</h1>
+          </div>
+
+          <div className="qp-user-chip">
+            {user.profile_image ? (
+              <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 ring-1 ring-border">
                 <img src={user.profile_image} alt={user.username} className="w-full h-full object-cover" />
               </div>
+            ) : (
+              <div
+                className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center text-sm font-semibold"
+                style={{
+                  background: "hsl(var(--primary) / 0.15)",
+                  color: "hsl(var(--primary))",
+                }}
+              >
+                {user.username.slice(0, 1).toUpperCase()}
+              </div>
             )}
-            <p className="text-sm text-muted-foreground">{user.username}</p>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold truncate leading-tight">{user.username}</div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground mt-0.5">
+                {roleLabel}
+              </div>
+            </div>
           </div>
         </div>
 
-        <nav className="px-3 space-y-1">
+        {/* Nav */}
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto pb-4">
           {filteredMenuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentPage === item.key;
@@ -169,45 +186,48 @@ export default function Layout({ user, onLogout, children, currentPage }) {
                   navigate(item.path);
                   setSidebarOpen(false);
                 }}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors ${
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                }`}
+                className={`qp-nav-item ${isActive ? "active" : ""}`}
               >
-                <Icon className="h-5 w-5" />
-                {item.name}
+                <Icon className="h-[18px] w-[18px] shrink-0" />
+                <span className="truncate">{item.name}</span>
               </button>
             );
           })}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 space-y-2">
-          <div className="px-3 py-2 text-center">
-            <p className="text-xs text-muted-foreground">Version 1.1.2</p>
-          </div>
+        {/* Footer */}
+        <div className="p-3 space-y-2 border-t border-border">
           <Button
             data-testid="logout-btn"
             variant="outline"
-            className="w-full gap-2"
+            className="w-full gap-2 h-10 font-medium"
             onClick={() => {
               onLogout();
               navigate("/login");
             }}
           >
             <LogOut className="h-4 w-4" />
-            Logout
+            Sign out
           </Button>
+          <div className="text-center">
+            <p className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+              v1.1.2
+            </p>
+          </div>
         </div>
       </aside>
 
       {/* Mobile Overlay */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setSidebarOpen(false)} data-testid="sidebar-overlay" />
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-30"
+          onClick={() => setSidebarOpen(false)}
+          data-testid="sidebar-overlay"
+        />
       )}
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-20 lg:pt-8 px-4 sm:px-6 lg:px-8 pb-8">{children}</main>
+      <main className="lg:ml-64 pt-20 lg:pt-10 px-4 sm:px-6 lg:px-10 pb-10">{children}</main>
     </div>
   );
 }

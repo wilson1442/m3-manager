@@ -152,7 +152,7 @@ export default function Player() {
         {error && (
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <div className="text-center p-8">
-              <div className="text-red-500 text-xl mb-2">⚠️ Error</div>
+              <div className="text-[#E07A6C] text-xl mb-2">⚠️ Error</div>
               <div className="text-white">{error}</div>
             </div>
           </div>

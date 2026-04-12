@@ -25,7 +25,7 @@ export default function BackupRestore({ user, onLogout }) {
         <div className="flex items-center justify-center h-64">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-destructive">
                 <AlertCircle className="h-5 w-5" />
                 Access Denied
               </CardTitle>
@@ -255,8 +255,8 @@ export default function BackupRestore({ user, onLogout }) {
                 Download Backup
               </Button>
 
-              <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
-                <p className="text-blue-600 dark:text-blue-400">
+              <div className="bg-primary/10 p-3 rounded-md text-sm border border-primary/20">
+                <p className="text-primary">
                   <strong>Note:</strong> Backups are downloaded as JSON files. Store them securely.
                 </p>
               </div>
@@ -317,11 +317,11 @@ export default function BackupRestore({ user, onLogout }) {
                 Restore from Backup
               </Button>
 
-              <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md text-sm border border-red-200 dark:border-red-800">
-                <p className="text-red-600 dark:text-red-400 font-semibold mb-1">
+              <div className="bg-destructive/10 p-3 rounded-md text-sm border border-destructive/30">
+                <p className="text-destructive font-semibold mb-1">
                   ⚠️ Warning
                 </p>
-                <p className="text-red-600 dark:text-red-400 text-xs">
+                <p className="text-destructive text-xs">
                   Restoring will <strong>DELETE</strong> existing data. Make sure you have a recent backup before proceeding.
                 </p>
               </div>

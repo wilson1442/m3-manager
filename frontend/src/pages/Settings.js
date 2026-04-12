@@ -66,7 +66,7 @@ export default function Settings({ user, onLogout }) {
         <div className="flex items-center justify-center h-64">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-red-600">
+              <CardTitle className="flex items-center gap-2 text-destructive">
                 <AlertCircle className="h-5 w-5" />
                 Access Denied
               </CardTitle>
@@ -531,8 +531,8 @@ export default function Settings({ user, onLogout }) {
                     Download Backup
                   </Button>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
-                    <p className="text-blue-600 dark:text-blue-400">
+                  <div className="bg-primary/10 p-3 rounded-md text-sm border border-primary/20">
+                    <p className="text-primary">
                       <strong>Note:</strong> Backups are downloaded as JSON files. Store them securely.
                     </p>
                   </div>
@@ -589,11 +589,11 @@ export default function Settings({ user, onLogout }) {
                     Restore from Backup
                   </Button>
 
-                  <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md text-sm border border-red-200 dark:border-red-800">
-                    <p className="text-red-600 dark:text-red-400 font-semibold mb-1">
+                  <div className="bg-destructive/10 p-3 rounded-md text-sm border border-destructive/30">
+                    <p className="text-destructive font-semibold mb-1">
                       ⚠️ Warning
                     </p>
-                    <p className="text-red-600 dark:text-red-400 text-xs">
+                    <p className="text-destructive text-xs">
                       Restoring will <strong>DELETE</strong> existing data. Make sure you have a recent backup before proceeding.
                     </p>
                   </div>
@@ -904,8 +904,8 @@ export default function Settings({ user, onLogout }) {
                     </Button>
                   </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm">
-                    <p className="text-blue-600 dark:text-blue-400">
+                  <div className="bg-primary/10 p-3 rounded-md text-sm border border-primary/20">
+                    <p className="text-primary">
                       <strong>Note:</strong> Pulling updates only downloads the changes. You must deploy to apply them.
                     </p>
                   </div>
@@ -948,8 +948,8 @@ export default function Settings({ user, onLogout }) {
                     Deploy Changes
                   </Button>
 
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-md text-sm border border-yellow-200 dark:border-yellow-800">
-                    <p className="text-yellow-600 dark:text-yellow-400">
+                  <div className="bg-[#E7B75A]/10 p-3 rounded-md text-sm border border-[#E7B75A]/30">
+                    <p className="text-[#E7B75A]">
                       <strong>⚠️ Warning:</strong> Services will restart. You will be disconnected for ~15 seconds.
                     </p>
                   </div>
@@ -1024,8 +1024,8 @@ export default function Settings({ user, onLogout }) {
                   )}
                   Save Notes
                 </Button>
-                <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md text-sm border border-blue-200 dark:border-blue-800">
-                  <p className="text-blue-600 dark:text-blue-400">
+                <div className="bg-primary/10 p-3 rounded-md text-sm border border-primary/30">
+                  <p className="text-primary">
                     <strong>ℹ️ Note:</strong> These notes will be visible to all users on their dashboard. Use HTML tags for formatting (headings, bold, lists, links, etc.).
                   </p>
                 </div>
