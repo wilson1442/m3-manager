@@ -97,6 +97,19 @@ def main():
     r = requests.post(f"{API}/auth/impersonate/{uuid.uuid4()}", headers=auth(admin_token))
     check("nonexistent user returns 404", r.status_code == 404, r.text)
 
+    # ---- Test 4: stop endpoint with a non-impersonation token returns 400 ----
+    r = requests.post(f"{API}/auth/impersonate/stop", headers=auth(admin_token))
+    check("stop with non-impersonation token returns 400", r.status_code == 400, r.text)
+
+    # ---- Test 5: stop endpoint with an impersonation token returns 200 ----
+    r = requests.post(f"{API}/auth/impersonate/{target['id']}", headers=auth(admin_token))
+    assert r.status_code == 200, r.text
+    imp_token = r.json()["access_token"]
+
+    r = requests.post(f"{API}/auth/impersonate/stop", headers=auth(imp_token))
+    check("stop with impersonation token returns 200", r.status_code == 200, r.text)
+    check("stop response has ok=true", r.status_code == 200 and r.json().get("ok") is True)
+
     print(f"\n{PASSED} passed, {FAILED} failed")
     sys.exit(0 if FAILED == 0 else 1)
 

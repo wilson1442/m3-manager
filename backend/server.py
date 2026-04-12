@@ -805,6 +805,45 @@ async def login(login_data: UserLogin, request: Request):
 
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
+@api_router.post("/auth/impersonate/stop")
+async def impersonate_stop(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+):
+    """End an impersonation session.
+
+    Requires that the caller's token carry an `act` claim. Patches the
+    matching open impersonation_events row with ended_at and emits a log
+    line. The frontend is responsible for restoring the admin token
+    locally; the server does not reissue one.
+    """
+    impersonator_id = request.state.impersonator_id
+    if impersonator_id is None:
+        raise HTTPException(status_code=400, detail="Not an impersonation session")
+
+    now = datetime.now(timezone.utc)
+
+    # Best-effort: patch the most recent open row for this (admin, target).
+    # Nested impersonation is forbidden, so at most one row can be open
+    # per (admin, target) pair at a time — the ended_at: None filter is
+    # sufficient without an explicit sort.
+    result = await db.impersonation_events.update_one(
+        {
+            "admin_id": impersonator_id,
+            "target_user_id": current_user.id,
+            "ended_at": None,
+        },
+        {"$set": {"ended_at": now.isoformat()}},
+    )
+
+    logger.info(
+        "Impersonation end: admin_id=%s target=%r matched=%d",
+        impersonator_id, current_user.username, result.modified_count,
+    )
+
+    return {"ok": True}
+
+
 @api_router.post("/auth/impersonate/{user_id}")
 async def impersonate_user(
     user_id: str,
