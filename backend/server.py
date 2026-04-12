@@ -805,6 +805,9 @@ async def login(login_data: UserLogin, request: Request):
 
     return {"access_token": access_token, "token_type": "bearer", "user": user}
 
+# NOTE: /stop must be registered BEFORE /{user_id} — FastAPI matches
+# routes in registration order, and a path parameter would otherwise
+# capture "stop" as a user_id and this endpoint would be unreachable.
 @api_router.post("/auth/impersonate/stop")
 async def impersonate_stop(
     request: Request,
