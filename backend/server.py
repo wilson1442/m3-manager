@@ -605,6 +605,24 @@ class DashboardNotes(BaseModel):
 class DashboardNotesUpdate(BaseModel):
     content: str
 
+class ImpersonationEvent(BaseModel):
+    """Audit record written when an admin impersonates a user.
+
+    One row is created on impersonation start; ended_at is patched on stop
+    or expires silently (never patched) if the admin closes the tab.
+    """
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    admin_id: str
+    admin_username: str
+    target_user_id: str
+    target_username: str
+    tenant_id: Optional[str] = None  # target user's tenant
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    ended_at: Optional[datetime] = None
+    ip: str
+    user_agent: Optional[str] = None
+
 # Backup directory setup
 BACKUP_DIR = ROOT_DIR / "backups"
 BACKUP_DIR.mkdir(exist_ok=True)
