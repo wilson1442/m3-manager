@@ -822,8 +822,9 @@ async def impersonate_user(
     client_ip = _client_ip(request)
     user_agent = request.headers.get("user-agent")
 
-    # Block nested impersonation.
-    if getattr(request.state, "impersonator_id", None) is not None:
+    # Block nested impersonation. get_current_user always sets this
+    # attribute, so we can read it directly.
+    if request.state.impersonator_id is not None:
         logger.warning(
             "Rejected nested impersonation: caller=%r target=%s from ip=%s",
             current_user.username, user_id, client_ip,
@@ -863,7 +864,7 @@ async def impersonate_user(
             expiration = tenant["expiration_date"]
             if isinstance(expiration, str):
                 expiration = datetime.fromisoformat(expiration)
-            if expiration < datetime.now(timezone.utc):
+            if expiration.replace(tzinfo=timezone.utc) < datetime.now(timezone.utc):
                 logger.warning(
                     "Rejected impersonation: expired tenant target=%r tenant_id=%s admin=%r from ip=%s",
                     target_doc.get("username"), target_doc.get("tenant_id"),
@@ -871,7 +872,9 @@ async def impersonate_user(
                 )
                 raise HTTPException(status_code=403, detail="Target user's tenant subscription has expired")
 
-    # Mint the impersonation token (60-minute lifetime).
+    # Mint the impersonation token (60-minute lifetime). The admin's
+    # original token is intentionally NOT invalidated — the frontend
+    # stashes it in sessionStorage and restores it on "Return to admin".
     access_token = create_access_token(
         data={"sub": target_doc["id"], "act": current_user.id},
         expires_minutes=60,
