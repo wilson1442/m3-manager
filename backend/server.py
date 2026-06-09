@@ -127,6 +127,34 @@ def parse_m3u_content(content: str) -> List[dict]:
     
     return channels
 
+
+def group_channels_by_category(channels: List[dict]) -> List[dict]:
+    """Group parsed channels by category and count them.
+
+    Channels with no `group` (missing or empty) are bucketed under the literal
+    name "Uncategorized". Returns a list of {"name": str, "channel_count": int}
+    sorted by category name.
+    """
+    counts: dict = {}
+    for channel in channels:
+        category = channel.get('group') or "Uncategorized"
+        counts[category] = counts.get(category, 0) + 1
+    result = [{"name": name, "channel_count": count} for name, count in counts.items()]
+    result.sort(key=lambda c: c['name'])
+    return result
+
+
+def filter_channels_by_category(channels: List[dict], category: str) -> List[dict]:
+    """Return only the parsed channels belonging to one category.
+
+    When `category == "Uncategorized"`, returns channels that have no group
+    (missing or empty); otherwise returns channels whose `group` matches exactly.
+    """
+    if category == "Uncategorized":
+        return [c for c in channels if not c.get('group')]
+    return [c for c in channels if c.get('group') == category]
+
+
 async def probe_stream(url: str) -> dict:
     """Check if a stream is online and extract metadata"""
     result = {
