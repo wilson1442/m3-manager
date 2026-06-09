@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   Search,
+  Compass,
   FolderTree,
   Calendar,
   Settings as SettingsIcon,
@@ -45,6 +46,7 @@ export default function Layout({ user, onLogout, onRestoreAdmin, children, curre
       { name: "Users", icon: Users, path: "/users", key: "users", roles: ["tenant_owner"] },
       { name: "M3U Playlists", icon: ListMusic, path: "/m3u", key: "m3u", roles: ["tenant_owner"] },
       { name: "Search Channels", icon: Search, path: "/channels", key: "channels", roles: ["tenant_owner"] },
+      { name: "Browse Channels", icon: Compass, path: "/browse", key: "browse", roles: ["tenant_owner"] },
       { name: "Categories", icon: FolderTree, path: "/categories", key: "categories", roles: ["tenant_owner"] },
       { name: "Events", icon: Calendar, path: "/events", key: "events", roles: ["tenant_owner"] }
     );
@@ -54,6 +56,7 @@ export default function Layout({ user, onLogout, onRestoreAdmin, children, curre
     menuItems.push(
       { name: "Playlists", icon: ListMusic, path: "/m3u", key: "m3u", roles: ["user"] },
       { name: "Search Channels", icon: Search, path: "/channels", key: "channels", roles: ["user"] },
+      { name: "Browse Channels", icon: Compass, path: "/browse", key: "browse", roles: ["user"] },
       { name: "Events", icon: Calendar, path: "/events", key: "events", roles: ["user"] }
     );
   }

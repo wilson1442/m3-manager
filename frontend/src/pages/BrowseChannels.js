@@ -41,8 +41,7 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
   // --- Level 1: playlists ---
   useEffect(() => {
     loadPlaylists();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // intentional: run once on mount
 
   const loadPlaylists = async () => {
     setLoading(true);
