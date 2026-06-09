@@ -1405,8 +1405,11 @@ async def get_playlist_categories(playlist_id: str, current_user: User = Depends
     if not playlist:
         raise HTTPException(status_code=404, detail="Playlist not found")
     # Super admin may browse any playlist; everyone else is tenant-scoped.
-    if current_user.role != "super_admin" and playlist.get('tenant_id') != current_user.tenant_id:
-        raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
+    if current_user.role != "super_admin":
+        if not current_user.tenant_id:
+            raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        if playlist.get('tenant_id') != current_user.tenant_id:
+            raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
 
     channels = parse_m3u_content(playlist.get('content') or "")
     return group_channels_by_category(channels)
@@ -1422,8 +1425,12 @@ async def get_playlist_channels(
     playlist = await db.m3u_playlists.find_one({"id": playlist_id}, {"_id": 0})
     if not playlist:
         raise HTTPException(status_code=404, detail="Playlist not found")
-    if current_user.role != "super_admin" and playlist.get('tenant_id') != current_user.tenant_id:
-        raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
+    # Super admin may browse any playlist; everyone else is tenant-scoped.
+    if current_user.role != "super_admin":
+        if not current_user.tenant_id:
+            raise HTTPException(status_code=400, detail="User must belong to a tenant")
+        if playlist.get('tenant_id') != current_user.tenant_id:
+            raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
 
     channels = parse_m3u_content(playlist.get('content') or "")
     matching = filter_channels_by_category(channels, category)
