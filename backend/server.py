@@ -1398,6 +1398,48 @@ async def probe_channel_ffmpeg(url: str, current_user: User = Depends(get_curren
     result = await probe_stream_ffmpeg(url)
     return FFmpegProbeResult(**result)
 
+@api_router.get("/m3u/{playlist_id}/categories")
+async def get_playlist_categories(playlist_id: str, current_user: User = Depends(get_current_user)):
+    """List the categories in one playlist with channel counts (drill-down browse)."""
+    playlist = await db.m3u_playlists.find_one({"id": playlist_id}, {"_id": 0})
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    # Super admin may browse any playlist; everyone else is tenant-scoped.
+    if current_user.role != "super_admin" and playlist.get('tenant_id') != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
+
+    channels = parse_m3u_content(playlist.get('content') or "")
+    return group_channels_by_category(channels)
+
+
+@api_router.get("/m3u/{playlist_id}/channels", response_model=List[Channel])
+async def get_playlist_channels(
+    playlist_id: str,
+    category: str,
+    current_user: User = Depends(get_current_user),
+):
+    """List the channels in one playlist that belong to one category (drill-down browse)."""
+    playlist = await db.m3u_playlists.find_one({"id": playlist_id}, {"_id": 0})
+    if not playlist:
+        raise HTTPException(status_code=404, detail="Playlist not found")
+    if current_user.role != "super_admin" and playlist.get('tenant_id') != current_user.tenant_id:
+        raise HTTPException(status_code=403, detail="Can only browse playlists in your tenant")
+
+    channels = parse_m3u_content(playlist.get('content') or "")
+    matching = filter_channels_by_category(channels, category)
+    return [
+        Channel(
+            name=c.get('name', 'Unknown'),
+            url=c.get('url', ''),
+            group=c.get('group'),
+            logo=c.get('logo'),
+            playlist_name=playlist['name'],
+            playlist_id=playlist['id'],
+        )
+        for c in matching
+    ]
+
+
 @api_router.get("/categories")
 async def get_categories(current_user: User = Depends(get_current_user)):
     """Get all unique categories from playlists in user's tenant (or all tenants for super admin) with source information"""
