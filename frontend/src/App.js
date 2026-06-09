@@ -10,6 +10,7 @@ import UserManagement from "@/pages/UserManagement";
 import TenantManagement from "@/pages/TenantManagement";
 import Profile from "@/pages/Profile";
 import Channels from "@/pages/Channels";
+import BrowseChannels from "@/pages/BrowseChannels";
 import Categories from "@/pages/Categories";
 import Events from "@/pages/Events";
 import Settings from "@/pages/Settings";
@@ -183,6 +184,16 @@ function App() {
             element={
               isAuthenticated ? (
                 <Channels user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
+          <Route
+            path="/browse"
+            element={
+              isAuthenticated ? (
+                <BrowseChannels user={user} onLogout={handleLogout} onRestoreAdmin={handleRestoreAdmin} />
               ) : (
                 <Navigate to="/login" replace />
               )

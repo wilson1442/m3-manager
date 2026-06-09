@@ -298,6 +298,54 @@ class M3UManagerAPITester:
             return True
         return False
 
+    def test_browse_channels_endpoints(self):
+        """Test drill-down browse endpoints: categories and channels for a playlist."""
+        if 'playlist' not in self.test_data:
+            print("❌ Skipping - No playlist available")
+            return False
+        playlist_id = self.test_data['playlist']['id']
+        owner_token = self.tokens.get('tenant_owner')
+
+        # Categories for the playlist (created content has one group-less channel)
+        ok_cats, cats = self.run_test(
+            "Browse: Playlist Categories",
+            "GET",
+            f"m3u/{playlist_id}/categories",
+            200,
+            token=owner_token,
+            description="List categories with counts for a playlist",
+        )
+        if not ok_cats or not isinstance(cats, list):
+            return False
+        has_uncat = any(c.get('name') == 'Uncategorized' and c.get('channel_count', 0) >= 1 for c in cats)
+        if not has_uncat:
+            print(f"   ❌ Expected an 'Uncategorized' category, got: {cats}")
+            return False
+
+        # Channels for the Uncategorized category
+        ok_chans, chans = self.run_test(
+            "Browse: Playlist Channels",
+            "GET",
+            f"m3u/{playlist_id}/channels?category=Uncategorized",
+            200,
+            token=owner_token,
+            description="List channels for a category in a playlist",
+        )
+        if not ok_chans or not isinstance(chans, list) or len(chans) < 1:
+            print(f"   ❌ Expected at least one channel, got: {chans}")
+            return False
+
+        # Unknown playlist id -> 404
+        ok_404, _ = self.run_test(
+            "Browse: Unknown Playlist 404",
+            "GET",
+            "m3u/does-not-exist/categories",
+            404,
+            token=owner_token,
+            description="Unknown playlist id returns 404",
+        )
+        return ok_404
+
     def test_theme_update(self):
         """Test theme update"""
         if 'tenant_owner' not in self.tokens:
@@ -780,6 +828,7 @@ def main():
         ("Get Playlists (Owner)", tester.test_get_m3u_playlists_as_owner),
         ("Get Playlists (User)", tester.test_get_m3u_playlists_as_user),
         ("Update Playlist", tester.test_update_m3u_playlist),
+        ("Browse Channels Endpoints", tester.test_browse_channels_endpoints),
         # v1.0.1 Beta Features (HIGH PRIORITY)
         ("Categories API with Source Grouping (v1.0.1)", tester.test_categories_api_with_source_grouping),
         ("Tenant Expiration Logic (v1.0.1)", tester.test_tenant_expiration_logic),
