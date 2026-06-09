@@ -36,6 +36,7 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [probingChannels, setProbingChannels] = useState({});
   const [channelStatus, setChannelStatus] = useState({});
+  const [imgErrors, setImgErrors] = useState({});
 
   // --- Level 1: playlists ---
   useEffect(() => {
@@ -79,6 +80,7 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
     setSelectedCategory(category);
     setSelectedChannels([]);
     setChannelStatus({});
+    setImgErrors({});
     setLoading(true);
     try {
       const res = await axios.get(`${API}/m3u/${selectedPlaylist.id}/channels`, {
@@ -111,8 +113,20 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Stream URL copied!");
-    } catch {
-      toast.error("Failed to copy URL");
+    } catch (error) {
+      const textArea = document.createElement("textarea");
+      textArea.value = url;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        toast.success("Stream URL copied!");
+      } catch (err) {
+        toast.error("Failed to copy URL");
+      }
+      document.body.removeChild(textArea);
     }
   };
 
@@ -120,8 +134,20 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
     try {
       await navigator.clipboard.writeText(logoUrl);
       toast.success("Logo URL copied!");
-    } catch {
-      toast.error("Failed to copy logo URL");
+    } catch (error) {
+      const textArea = document.createElement("textarea");
+      textArea.value = logoUrl;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand("copy");
+        toast.success("Logo URL copied!");
+      } catch (err) {
+        toast.error("Failed to copy logo URL");
+      }
+      document.body.removeChild(textArea);
     }
   };
 
@@ -202,7 +228,12 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
 
         {/* Breadcrumb */}
         <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
-          <button onClick={goToPlaylists} className="hover:text-foreground transition-colors">
+          <button
+            onClick={goToPlaylists}
+            className={`hover:text-foreground transition-colors ${
+              view === "playlists" ? "text-foreground font-medium" : ""
+            }`}
+          >
             Browse Channels
           </button>
           {selectedPlaylist && (
@@ -333,16 +364,14 @@ export default function BrowseChannels({ user, onLogout, onRestoreAdmin }) {
                 {channels.map((channel, index) => (
                   <Card key={`${channel.url}-${index}`} className="overflow-hidden">
                     <div className="relative aspect-video bg-muted flex items-center justify-center">
-                      {channel.logo ? (
+                      {channel.logo && !imgErrors[channel.url] ? (
                         <img
                           src={channel.logo}
                           alt={channel.name}
                           className="max-w-[120px] max-h-[80px] object-contain p-2"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                            e.target.parentElement.innerHTML =
-                              '<div class="flex items-center justify-center w-full h-full"><span class="text-4xl text-muted-foreground">📺</span></div>';
-                          }}
+                          onError={() =>
+                            setImgErrors((prev) => ({ ...prev, [channel.url]: true }))
+                          }
                         />
                       ) : (
                         <span className="text-4xl text-muted-foreground">📺</span>
