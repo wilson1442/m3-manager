@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Landing from "@/pages/Landing";
@@ -24,18 +25,58 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
     const savedTheme = localStorage.getItem("theme") || "dark";
-    
     setTheme(savedTheme);
     document.documentElement.classList.toggle("dark", savedTheme === "dark");
-    
-    if (token && savedUser) {
-      setIsAuthenticated(true);
-      setUser(JSON.parse(savedUser));
+
+    const token = localStorage.getItem("token");
+    const savedUser = localStorage.getItem("user");
+
+    if (!token || !savedUser) {
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    // Validate the stashed token against the backend before treating the
+    // user as logged in. Without this, an expired JWT (24h lifetime) would
+    // route the user to the dashboard, every API call would 401, and they
+    // would see a blank screen until they manually signed out.
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await axios.get("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (cancelled) return;
+        const freshUser = response.data;
+        localStorage.setItem("user", JSON.stringify(freshUser));
+        setUser(freshUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        if (cancelled) return;
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          // Token is rejected — clear stale auth and fall through to /login.
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          sessionStorage.removeItem(ADMIN_TOKEN_KEY);
+          sessionStorage.removeItem(ADMIN_USER_KEY);
+        } else {
+          // Network blip or 5xx: trust the cached user optimistically rather
+          // than booting the user out for a transient backend hiccup. The
+          // global 401 interceptor will catch a truly bad token on the next
+          // real API call.
+          setUser(JSON.parse(savedUser));
+          setIsAuthenticated(true);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleLogin = (token, userData) => {
